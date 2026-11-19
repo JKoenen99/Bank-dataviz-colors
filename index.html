@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="nl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <title>Dataviz kleurenpalet · playground</title>
+    <link rel="stylesheet" href="css/styles.css" />
+    <script type="module" src="js/app.js"></script>
+  </head>
+  <body data-chrome="light">
+    <svg width="0" height="0" class="defs" aria-hidden="true"><defs id="cvd-defs"></defs></svg>
+
+    <header class="topbar">
+      <div class="title">
+        <h1>Dataviz kleurenpalet</h1>
+        <p>Experiment voor light en dark mode · geen officiële huisstijl</p>
+      </div>
+      <nav aria-label="Secties">
+        <a href="#charts">Charts</a>
+        <a href="#kleurschalen">Kleurschalen</a>
+        <a href="#tokens">Tokens</a>
+      </nav>
+      <div class="controls">
+        <div class="seg" id="view-seg" role="group" aria-label="Weergave">
+          <button type="button" data-view="light">Light</button>
+          <button type="button" data-view="dark">Dark</button>
+          <button type="button" data-view="both">Beide</button>
+        </div>
+        <label class="field">
+          <span>Simulatie</span>
+          <select id="cvd">
+            <option value="none">Normaal zicht</option>
+            <option value="deutan">Deuteranopie (groen)</option>
+            <option value="protan">Protanopie (rood)</option>
+            <option value="tritan">Tritanopie (blauw)</option>
+          </select>
+        </label>
+        <button type="button" id="share">Deel link</button>
+        <button type="button" id="reset" class="ghost">Reset</button>
+      </div>
+    </header>
+
+    <main id="main">
+      <section id="charts" class="block">
+        <div class="block-head">
+          <h2>Voorbeeldcharts</h2>
+          <p>Kies links welke stap uit elke kleurschaal welke rol krijgt. De charts volgen direct.</p>
+        </div>
+        <div class="workbench">
+          <aside id="panel" aria-label="Palet instellen"></aside>
+          <div id="stages"></div>
+        </div>
+      </section>
+
+      <section id="kleurschalen" class="block">
+        <div class="block-head">
+          <h2>Kleurschalen</h2>
+          <p>
+            Elke stap heeft in elke schaal hetzelfde contrast. De witte en donkere chip tonen de kleur op die
+            achtergrond met de contrastratio; een doorgestreepte chip haalt geen 3:1. Klik een kleur om hem aan te
+            passen.
+          </p>
+          <label class="check"><input type="checkbox" id="use-pins" /> Merkkleuren exact vastzetten (★)</label>
+        </div>
+        <div id="scales"></div>
+      </section>
+
+      <section id="tokens" class="block">
+        <div class="block-head">
+          <h2>Tokens</h2>
+          <p>De huidige keuzes als CSS variabelen of JSON.</p>
+        </div>
+        <div class="token-bar">
+          <div class="seg" id="token-tabs" role="group" aria-label="Formaat">
+            <button type="button" data-tab="css">CSS</button>
+            <button type="button" data-tab="json">JSON</button>
+          </div>
+          <button type="button" id="token-copy">Kopieer</button>
+          <button type="button" id="token-download" class="ghost">Download</button>
+        </div>
+        <pre id="token-output" tabindex="0"></pre>
+      </section>
+    </main>
+
+    <div id="tooltip" role="status" hidden></div>
+
+    <dialog id="swatch-dialog" aria-labelledby="dlg-title">
+      <form id="dlg-form" method="dialog">
+        <h3 id="dlg-title"></h3>
+        <div class="dlg-row">
+          <span id="dlg-preview"></span>
+          <input type="color" id="dlg-color" aria-label="Kleurkiezer" />
+          <input type="text" id="dlg-hex" aria-label="Hex-waarde" spellcheck="false" autocomplete="off" maxlength="7" />
+          <button type="button" id="dlg-copy" class="ghost">Kopieer</button>
+        </div>
+        <p id="dlg-contrast"></p>
+        <div class="dlg-actions">
+          <button type="button" id="dlg-reset" class="ghost">Terug naar berekend</button>
+          <span class="spacer"></span>
+          <button type="button" id="dlg-cancel" class="ghost">Annuleer</button>
+          <button type="submit" id="dlg-apply" class="primary">Toepassen</button>
+        </div>
+      </form>
+    </dialog>
+  </body>
+</html>

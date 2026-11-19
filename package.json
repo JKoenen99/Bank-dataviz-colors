@@ -1,0 +1,11 @@
+{
+  "name": "bank-dataviz-colors",
+  "private": true,
+  "type": "module",
+  "description": "Playground voor een toegankelijk dataviz kleurenpalet in light en dark mode.",
+  "scripts": {
+    "start": "python3 -m http.server 8080",
+    "check": "node scripts/build-tokens.mjs --check",
+    "tokens": "node scripts/build-tokens.mjs"
+  }
+}
