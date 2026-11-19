@@ -31,22 +31,27 @@ export const incomeVsSpend = {
   ],
 };
 
+// The last series is "Overig" (all others): it always gets the grey for
+// distinct values, never a categorical colour.
 export const spendByCategory = {
   cats: ['jul', 'aug', 'sep', 'okt', 'nov', 'dec'],
   series: [
     { name: 'Wonen', values: [1250, 1250, 1250, 1250, 1250, 1250] },
     { name: 'Boodschappen', values: [520, 480, 505, 540, 510, 590] },
-    { name: 'Vervoer', values: [310, 260, 240, 290, 270, 255] },
     { name: 'Vrije tijd', values: [640, 420, 280, 350, 330, 480] },
+    { name: 'Vervoer', values: [310, 260, 240, 290, 270, 255] },
     { name: 'Verzekeringen', values: [285, 285, 285, 285, 285, 285] },
-    { name: 'Overig', values: [315, 245, 250, 325, 285, 320] },
+    { name: 'Zorg', values: [140, 95, 180, 120, 110, 160] },
+    { name: 'Abonnementen', values: [92, 92, 104, 104, 104, 118] },
+    { name: 'Kleding', values: [60, 140, 210, 75, 90, 170] },
+    { name: 'Overig', values: [215, 165, 140, 210, 175, 190], other: true },
   ],
 };
 
 export const funds = (() => {
-  const names = ['Wereldwijd aandelen', 'Duurzaam mix', 'Obligaties euro', 'Vastgoed', 'Technologie', 'Geldmarkt'];
-  const drift = [0.9, 0.55, 0.2, -0.25, 1.35, 0.12];
-  const vol = [1.6, 1.0, 0.5, 1.4, 2.4, 0.05];
+  const names = ['Wereldwijd aandelen', 'Duurzaam mix', 'Obligaties euro', 'Vastgoed', 'Technologie', 'Geldmarkt', 'Opkomende markten', 'Small caps'];
+  const drift = [0.9, 0.55, 0.2, -0.25, 1.35, 0.12, 0.4, 0.7];
+  const vol = [1.6, 1.0, 0.5, 1.4, 2.4, 0.05, 2.0, 1.9];
   return {
     x: MONTHS,
     series: names.map((name, k) => {
@@ -73,12 +78,14 @@ export const wealth = {
 };
 
 export const portfolio = [
-  { name: 'Aandelen', value: 42 },
-  { name: 'Obligaties', value: 23 },
-  { name: 'Vastgoed', value: 12 },
-  { name: 'Grondstoffen', value: 9 },
-  { name: 'Liquiditeiten', value: 8 },
+  { name: 'Aandelen', value: 38 },
+  { name: 'Obligaties', value: 22 },
+  { name: 'Vastgoed', value: 11 },
+  { name: 'Grondstoffen', value: 8 },
+  { name: 'Liquiditeiten', value: 7 },
   { name: 'Alternatieven', value: 6 },
+  { name: 'Infrastructuur', value: 5 },
+  { name: 'Private equity', value: 3 },
 ];
 
 export const riskReturn = (() => {
@@ -108,7 +115,9 @@ export const activity = (() => {
       const lunch = Math.exp(-((h - 4.5) ** 2) / 4);
       const evening = Math.exp(-((h - 10) ** 2) / 5);
       const weekend = d >= 5 ? 1.5 : 1;
-      return Math.round((8 + 46 * lunch * (d >= 5 ? 0.7 : 1) + 38 * evening * weekend) * (0.75 + r() * 0.5));
+      const v = Math.round((8 + 46 * lunch * (d >= 5 ? 0.7 : 1) + 38 * evening * weekend) * (0.75 + r() * 0.5));
+      // Thursday 14-15: storing, no data.
+      return d === 3 && (h === 6 || h === 7) ? null : v;
     }),
   );
   return { rows, cols, values };

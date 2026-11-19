@@ -5,7 +5,7 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { SCALE_DEFS, MIN_CONTRAST } from '../js/scales.js';
-import { DEFAULT_STATE, resolve, separation, MODES, NEUTRAL_ROLES, STATUS_ROLES } from '../js/palette.js';
+import { DEFAULT_STATE, resolve, separation, MODES, NEUTRAL_ROLES, STATUS_ROLES, MAX_CATEGORICAL } from '../js/palette.js';
 import { toCss, toJson } from '../js/export.js';
 
 const resolved = resolve(DEFAULT_STATE);
@@ -25,9 +25,19 @@ for (const def of SCALE_DEFS) {
   }
 }
 
-// 2. Role rule: every mark colour reaches 3:1, label text reaches 4.5:1.
+// 2. Categorical rule: at most five colours, none of them grey.
+if (DEFAULT_STATE.cat.length > MAX_CATEGORICAL) fail(`${DEFAULT_STATE.cat.length} categorische kleuren, maximaal ${MAX_CATEGORICAL}`);
+DEFAULT_STATE.cat.forEach((c, i) => c.scale === 'grey' && fail(`cat-${i + 1} is grijs: grijs is gereserveerd voor bijzondere waarden`));
+if (DEFAULT_STATE.seq.scale !== 'blue') fail(`sequentieel standaard ${DEFAULT_STATE.seq.scale}, verwacht blue`);
+
+// 3. Role rule: every mark colour reaches 3:1, label text reaches 4.5:1.
+//    Distinct values: total and other are marks, missing may stay recessive.
 for (const mode of MODES) {
   const t = resolved.tokens[mode];
+  for (const role of ['total', 'other']) {
+    const c = t.distinct[role];
+    if (c.contrast < MIN_CONTRAST) fail(`${mode} ${role} ${c.hex}: ${c.contrast.toFixed(2)}:1`);
+  }
   t.cat.forEach((c, i) => c.contrast < MIN_CONTRAST && fail(`${mode} cat-${i + 1} ${c.hex}: ${c.contrast.toFixed(2)}:1`));
   for (const role of Object.keys(STATUS_ROLES)) {
     const c = t.status[role];
@@ -50,6 +60,7 @@ for (const mode of MODES) {
   for (const c of t.cat) console.log(`  ${c.name.padEnd(7)} ${c.ref.padEnd(11)} ${c.hex}  ${c.contrast.toFixed(2)}:1`);
   console.log(`  zwakste paar: ${sep.normal.value.toFixed(1)} (${sep.normal.pair}), kleurenblind ${sep.cvd.value.toFixed(1)} (${sep.cvd.pair})`);
   console.log(`  ${Object.keys(NEUTRAL_ROLES).map((r) => `${r} ${t.neutral[r].hex}`).join('  ')}`);
+  console.log(`  ${Object.entries(t.distinct).map(([r, c]) => `${r} ${c.hex}`).join('  ')}`);
 }
 
 if (problems.length) {

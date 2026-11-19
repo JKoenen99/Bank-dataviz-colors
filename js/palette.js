@@ -12,15 +12,15 @@ export const DEFAULT_STATE = {
   cvd: 'none', // none | protan | deutan | tritan
   usePins: true,
   scales: {}, // scale id -> { chromaScale, hueShift, overrides: { step: hex } }
-  catCount: 6,
-  // Fixed order: a chart with n series uses the first n slots.
+  demoCount: 5, // how many categories the example charts show (2-8)
+  // Five colours in a fixed order: a chart with n series uses the first n
+  // slots. With more than five categories every category gets slot 1.
   cat: [
     { name: 'Blue', scale: 'blue', light: 800, dark: 300 },
     { name: 'Teal', scale: 'green', light: 500, dark: 500 },
     { name: 'Yellow', scale: 'yellow', light: 400, dark: 200 },
     { name: 'Coral', scale: 'coral', light: 600, dark: 300 },
     { name: 'Purple', scale: 'purple', light: 400, dark: 400 },
-    { name: 'Green', scale: 'green', light: 800, dark: 100 },
   ],
   neutral: {
     backdrop: { light: 50, dark: 1000 },
@@ -29,7 +29,14 @@ export const DEFAULT_STATE = {
     muted: { light: 600, dark: 400 },
     text: { light: 1000, dark: 50 },
   },
-  seq: { scale: 'green', classes: 5 },
+  // Grey, black and white are not categorical colours. They are reserved
+  // for values that stand apart from the categories.
+  distinct: {
+    total: { light: 1000, dark: 50 },
+    other: { light: 500, dark: 500 },
+    missing: { light: 200, dark: 800 },
+  },
+  seq: { scale: 'blue', classes: 5 },
   div: { neg: 'coral', pos: 'blue' },
   status: {
     positive: { scale: 'green', light: 600, dark: 400 },
@@ -45,6 +52,23 @@ export const NEUTRAL_ROLES = {
   axis: 'As / baseline',
   muted: 'Labels',
   text: 'Tekst',
+};
+
+export const DISTINCT_ROLES = {
+  total: 'Totaal, gemiddelde',
+  other: 'Overig',
+  missing: 'Ontbrekend',
+};
+
+/** More categories than this: every category gets the primary colour. */
+export const MAX_CATEGORICAL = 5;
+
+/** Chart geometry that belongs with the palette. */
+export const SPEC = {
+  gap: 2, // px between touching segments (bars, pie slices, cells, areas)
+  radius: 4, // px corner radius on bars, cells and keys
+  baseline: 2, // px stroke of the base axis (zero line)
+  axis: 1, // px stroke of other axis lines, gridlines and crosshairs
 };
 
 export const STATUS_ROLES = {
@@ -83,6 +107,10 @@ export function resolve(state) {
     for (const role of Object.keys(NEUTRAL_ROLES)) {
       neutral[role] = withContrast(pick('grey', state.neutral[role][mode]));
     }
+    const distinct = {};
+    for (const role of Object.keys(DISTINCT_ROLES)) {
+      distinct[role] = withContrast(pick('grey', state.distinct[role][mode]));
+    }
     const status = {};
     for (const role of Object.keys(STATUS_ROLES)) {
       const s = state.status[role];
@@ -91,8 +119,9 @@ export function resolve(state) {
     tokens[mode] = {
       surface,
       neutral,
+      distinct,
       cat: state.cat
-        .slice(0, state.catCount)
+        .slice(0, MAX_CATEGORICAL)
         .map((slot) => ({ name: slot.name, ...withContrast(pick(slot.scale, slot[mode])) })),
       seq: sequentialSteps(state.seq.classes).map((step) =>
         withContrast(pick(state.seq.scale, forMode(mode, step))),

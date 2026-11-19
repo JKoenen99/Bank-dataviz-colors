@@ -3,7 +3,7 @@
 Playground voor een toegankelijk dataviz kleurenpalet in light mode (`#FFFFFF`) en dark mode (`#1E1E1E`).
 Experimenteel, geen officiële huisstijl.
 
-De tool toont voorbeeldcharts (staaf, gestapeld, lijn, vlak, donut, scatter, heatmap, divergerend, KPI tegels)
+De tool toont voorbeeldcharts (staaf, gestapeld, gerangschikt, lijn, vlak, taart, scatter, heatmap, divergerend, KPI tegels)
 en laat je per rol kiezen welke stap uit welke kleurschaal gebruikt wordt. Alles is statisch: geen build, geen
 dependencies.
 
@@ -44,16 +44,39 @@ Teal is geen aparte schaal maar het midden van de groene schaal (green 400 tot e
 Geel wordt in light mode oker/goud (yellow 400 en donkerder), omdat geel op wit geen 3:1 kan halen.
 Rood is toegevoegd voor statuskleuren.
 
+## Chartregels
+
+- **Ruimte:** 2px tussen segmenten, overal: gestapelde en gegroepeerde staven, taartpunten, heatmapcellen, vlakken.
+- **Radius:** 4px op alles wat een radius heeft (staafuiteinden, cellen, legenda-keys).
+- **Assen:** de basis-as (nullijn) is 2px, overige assen, gridlines en crosshairs zijn 1px.
+- **Taart, geen donut.** Een taart toont maximaal 5 kleuren; de rest valt onder Overig.
+- **Categorisch:** 5 kleuren in vaste volgorde. Meer dan 5 categorieën: alles in kleur 1, de primaire blauw.
+- **Grijs, zwart en wit** zijn geen categorische kleuren. Ze zijn gereserveerd voor bijzondere waarden:
+  totalen en gemiddelden, Overig en ontbrekende data.
+- **Sequentieel** is standaard blauw.
+
+Met *Voorbeelden tonen* in het paneel kies je hoeveel categorieën de charts tonen (2 tot en met 8), zodat je
+de overgang naar één kleur ziet.
+
 ## Voorgesteld palet
 
 | # | Naam | Light | Dark |
 | --- | --- | --- | --- |
-| 1 | Blue | blue 800 `#004291` | blue 300 `#3CC0FE` |
+| 1 | Blue (primair) | blue 800 `#004291` | blue 300 `#3CC0FE` |
 | 2 | Teal | green 500 `#008D85` | green 500 `#008D85` |
 | 3 | Yellow | yellow 400 `#BA8A00` | yellow 200 `#F3C000` |
 | 4 | Coral | coral 600 `#B24A39` | coral 300 `#F29179` |
 | 5 | Purple | purple 400 `#928DC9` | purple 400 `#928DC9` |
-| 6 | Green | green 800 `#004C4C` | green 100 `#C5EBE6` |
+
+Bijzondere waarden:
+
+| Rol | Light | Dark |
+| --- | --- | --- |
+| Totaal, gemiddelde | grey 1000 `#252525` | grey 50 `#F5F5F5` |
+| Overig | grey 500 `#7D7D7D` | grey 500 `#7D7D7D` |
+| Ontbrekend | grey 200 `#C9C9C9` | grey 800 `#424242` |
+
+Ontbrekend blijft bewust onder 3:1: het moet terugvallen. Totaal en Overig halen 3:1.
 
 Grijs: backdrop grey 50 / 1000, gridlines grey 100 / 900, as grey 200 / 800, labels grey 600 / 400.
 De volledige set staat in [`tokens/`](tokens/).
@@ -65,7 +88,7 @@ index.html            de playground
 css/styles.css        opmaak van de tool
 js/color.js           kleurwiskunde (OKLCH, WCAG contrast, kleurenblind-simulatie)
 js/scales.js          definitie en generator van de kleurschalen
-js/palette.js         rollen: categorisch, grijs, sequentieel, divergerend, status
+js/palette.js         rollen (categorisch, grijs, bijzonder, sequentieel, divergerend, status) en chartmaten
 js/charts.js          de voorbeeldcharts (SVG)
 js/data.js            fictieve voorbeelddata
 js/export.js          export naar CSS variabelen en JSON
@@ -76,7 +99,7 @@ scripts/build-tokens.mjs  controleert de regels en schrijft tokens/
 ## Controleren en tokens bouwen
 
 ```
-npm run check    # controleert de contrastregels van het voorstel
+npm run check    # controleert de contrast- en paletregels van het voorstel
 npm run tokens   # idem, en schrijft tokens/tokens.css en tokens/tokens.json
 ```
 

@@ -5,7 +5,9 @@ import {
   DEFAULT_STATE,
   MODES,
   NEUTRAL_ROLES,
+  DISTINCT_ROLES,
   STATUS_ROLES,
+  MAX_CATEGORICAL,
   MIN_CONTRAST,
   resolve,
   separation,
@@ -26,7 +28,8 @@ const HUE_SCALES = SCALE_IDS.filter((id) => id !== 'grey');
 
 // --- State ---------------------------------------------------------------------
 
-const STORAGE_KEY = 'bank-dataviz-colors/v1';
+const STORAGE_KEY = 'bank-dataviz-colors/v2';
+const DEMO_COUNTS = [2, 3, 4, 5, 6, 7, 8];
 const clone = (o) => JSON.parse(JSON.stringify(o));
 
 const oneOf = (v, list, fallback) => (list.includes(v) ? v : fallback);
@@ -40,7 +43,7 @@ function sanitize(raw) {
   d.view = oneOf(raw.view, ['light', 'dark', 'both'], d.view);
   d.cvd = oneOf(raw.cvd, ['none', 'protan', 'deutan', 'tritan'], d.cvd);
   d.usePins = raw.usePins !== false;
-  d.catCount = oneOf(Number(raw.catCount), [5, 6], d.catCount);
+  d.demoCount = oneOf(Number(raw.demoCount), DEMO_COUNTS, d.demoCount);
   for (const id of SCALE_IDS) {
     const s = raw.scales?.[id];
     if (!s || typeof s !== 'object') continue;
@@ -61,7 +64,8 @@ function sanitize(raw) {
       const r = raw.cat[i] ?? {};
       return {
         name: typeof r.name === 'string' && r.name.trim() ? r.name.trim().slice(0, 24) : slot.name,
-        scale: oneOf(r.scale, SCALE_IDS, slot.scale),
+        // Grey is reserved for distinct values, never a categorical colour.
+        scale: oneOf(r.scale, HUE_SCALES, slot.scale),
         light: stepOf(r.light, slot.light),
         dark: stepOf(r.dark, slot.dark),
       };
@@ -69,6 +73,9 @@ function sanitize(raw) {
   }
   for (const role of Object.keys(NEUTRAL_ROLES)) {
     for (const mode of MODES) d.neutral[role][mode] = stepOf(raw.neutral?.[role]?.[mode], d.neutral[role][mode]);
+  }
+  for (const role of Object.keys(DISTINCT_ROLES)) {
+    for (const mode of MODES) d.distinct[role][mode] = stepOf(raw.distinct?.[role]?.[mode], d.distinct[role][mode]);
   }
   d.seq.scale = oneOf(raw.seq?.scale, SCALE_IDS, d.seq.scale);
   d.seq.classes = oneOf(Number(raw.seq?.classes), [3, 4, 5, 6, 7], d.seq.classes);
@@ -190,13 +197,13 @@ function separationLine(mode) {
 
 function renderPanel() {
   const slots = state.cat
-    .slice(0, state.catCount)
+    .slice(0, MAX_CATEGORICAL)
     .map(
       (slot, i) => `
       <div class="slot">
         <div class="slot-head">
           <span class="slot-nr">${i + 1}</span>
-          <select data-act="cat-scale" data-slot="${i}" data-fk="cat-scale-${i}" aria-label="Kleurschaal voor reeks ${i + 1}">${options(SCALE_IDS, slot.scale, scaleName)}</select>
+          <select data-act="cat-scale" data-slot="${i}" data-fk="cat-scale-${i}" aria-label="Kleurschaal voor reeks ${i + 1}">${options(HUE_SCALES, slot.scale, scaleName)}</select>
           <span class="slot-name">${esc(slot.name)}</span>
         </div>
         ${MODES.map((mode) => miniRow(slot.scale, mode, slot[mode], `data-act="cat-step" data-slot="${i}" data-mode="${mode}"`, `cat-${i}-${mode}`)).join('')}
@@ -208,6 +215,13 @@ function renderPanel() {
     .map(
       ([role, label]) =>
         `<tr><th scope="row">${label}</th>${MODES.map((mode) => `<td>${stepSelect('grey', state.neutral[role][mode], `data-act="neutral" data-role="${role}" data-mode="${mode}" aria-label="${label}, ${MODE_LABEL[mode]}"`, `neutral-${role}-${mode}`)}</td>`).join('')}</tr>`,
+    )
+    .join('');
+
+  const distinctRows = Object.entries(DISTINCT_ROLES)
+    .map(
+      ([role, label]) =>
+        `<tr><th scope="row">${label}</th>${MODES.map((mode) => `<td>${stepSelect('grey', state.distinct[role][mode], `data-act="distinct" data-role="${role}" data-mode="${mode}" aria-label="${label}, ${MODE_LABEL[mode]}"`, `distinct-${role}-${mode}`)}</td>`).join('')}</tr>`,
     )
     .join('');
 
@@ -226,11 +240,9 @@ function renderPanel() {
     <section>
       <div class="panel-head">
         <h3>Categorisch</h3>
-        <div class="seg small" role="group" aria-label="Aantal kleuren">
-          ${[5, 6].map((n) => `<button type="button" data-act="cat-count" data-count="${n}" data-fk="cat-count-${n}" aria-pressed="${state.catCount === n}">${n} kleuren</button>`).join('')}
-        </div>
+        <label class="inline-fields">Voorbeelden tonen <select data-act="demo-count" data-fk="demo-count" aria-label="Aantal categorieën in de voorbeeldcharts">${options(DEMO_COUNTS, state.demoCount, (n) => `${n} categorieën`)}</select></label>
       </div>
-      <p class="hint">Vaste volgorde: een chart met drie reeksen gebruikt kleur 1 tot en met 3. Lage staafjes halen geen 3:1 in die mode.</p>
+      <p class="hint">Vijf kleuren in vaste volgorde: een chart met drie reeksen gebruikt kleur 1 tot en met 3. Meer dan vijf categorieën: alles in kleur 1, de primaire blauw. Grijs is geen categorische kleur. Lage staafjes halen geen 3:1 in die mode.</p>
       ${slots}
       <ul class="separation" title="Afstand in OKLab x 100. Richtlijn: minimaal 15 voor normaal zicht en 8 bij rood-groen kleurenblindheid.">
         ${MODES.map(separationLine).join('')}
@@ -239,6 +251,11 @@ function renderPanel() {
     <section>
       <h3>Grijs: backdrop en lijnen</h3>
       <table class="roles"><thead><tr><th></th><th>Light</th><th>Dark</th></tr></thead><tbody>${neutralRows}</tbody></table>
+    </section>
+    <section>
+      <h3>Bijzondere waarden</h3>
+      <p class="hint">Grijs, zwart en wit zijn gereserveerd voor waarden die los staan van de categorieën: totalen en gemiddelden, Overig en ontbrekende data. Ontbrekend mag onder 3:1 blijven, het moet juist terugvallen.</p>
+      <table class="roles"><thead><tr><th></th><th>Light</th><th>Dark</th></tr></thead><tbody>${distinctRows}</tbody></table>
     </section>
     <section>
       <h3>Sequentieel</h3>
@@ -267,6 +284,7 @@ function renderPanel() {
 function stageVars(t) {
   const v = { surface: t.surface };
   for (const role of Object.keys(NEUTRAL_ROLES)) v[role] = t.neutral[role].hex;
+  for (const role of Object.keys(DISTINCT_ROLES)) v[role] = t.distinct[role].hex;
   t.cat.forEach((c, i) => (v[`cat-${i + 1}`] = c.hex));
   t.seq.forEach((c, i) => (v[`seq-${i + 1}`] = c.hex));
   t.div.forEach((c, i) => (v[`div-${i + 1}`] = c.hex));
@@ -317,7 +335,10 @@ function legendHtml(legend) {
 function scaleLegendHtml(scale) {
   if (!scale) return '';
   const cells = Array.from({ length: scale.count }, (_, i) => `<i style="background:var(--${scale.colorVar}-${i + 1})"></i>`).join('');
-  return `<div class="scale-legend"><span>${esc(scale.from)}</span><span class="strip">${cells}</span><span>${esc(scale.to)}</span></div>`;
+  const missing = scale.missing
+    ? `<span class="scale-missing"><i style="background:var(--missing)"></i>${esc(scale.missing)}</span>`
+    : '';
+  return `<div class="scale-legend">${missing}<span>${esc(scale.from)}</span><span class="strip">${cells}</span><span>${esc(scale.to)}</span></div>`;
 }
 
 function tableHtml(table) {
@@ -356,7 +377,7 @@ function drawCharts() {
       const chart = CHARTS.find((c) => c.id === card.dataset.chart);
       const plot = $('.plot', card);
       const w = Math.max(260, Math.floor(plot.clientWidth));
-      const out = chart.render({ w, n: state.catCount, tokens });
+      const out = chart.render({ w, n: state.demoCount, tokens });
       plot.innerHTML = openTables.has(chart.id)
         ? tableHtml(out.table)
         : legendHtml(out.legend) + out.svg + scaleLegendHtml(out.scale);
@@ -524,7 +545,6 @@ function bindEvents() {
     const b = e.target.closest('button[data-act]');
     if (!b) return;
     if (b.dataset.act === 'cat-step') update((s) => (s.cat[+b.dataset.slot][b.dataset.mode] = +b.dataset.step));
-    if (b.dataset.act === 'cat-count') update((s) => (s.catCount = +b.dataset.count));
   });
   $('#panel').addEventListener('change', (e) => {
     const el = e.target.closest('select[data-act]');
@@ -535,6 +555,8 @@ function bindEvents() {
         s.cat[+slot].scale = el.value;
         s.cat[+slot].name = scaleName(el.value);
       } else if (act === 'neutral') s.neutral[role][mode] = +el.value;
+      else if (act === 'distinct') s.distinct[role][mode] = +el.value;
+      else if (act === 'demo-count') s.demoCount = +el.value;
       else if (act === 'status') s.status[role][mode] = +el.value;
       else if (act === 'seq-scale') s.seq.scale = el.value;
       else if (act === 'seq-classes') s.seq.classes = +el.value;

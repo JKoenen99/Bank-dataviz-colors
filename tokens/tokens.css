@@ -79,6 +79,14 @@
   --dv-grey-1000: #252525;
 }
 
+/* Chartregels: maximaal 5 categorische kleuren, daarboven alles in --dv-cat-1. Geen donuts. */
+:root {
+  --dv-gap: 2px; /* ruimte tussen segmenten */
+  --dv-radius: 4px;
+  --dv-stroke-baseline: 2px; /* basis-as */
+  --dv-stroke-axis: 1px; /* overige assen en gridlines */
+}
+
 /* Light mode (surface #FFFFFF) */
 :root,
 [data-theme="light"] {
@@ -88,17 +96,19 @@
   --dv-axis: #C9C9C9; /* grey.200 */
   --dv-muted: #6B6B6B; /* grey.600 */
   --dv-text: #252525; /* grey.1000 */
+  --dv-total: #252525; /* grey.1000 */
+  --dv-other: #7D7D7D; /* grey.500 */
+  --dv-missing: #C9C9C9; /* grey.200 */
   --dv-cat-1: #004291; /* blue.800 */
   --dv-cat-2: #008D85; /* green.500 */
   --dv-cat-3: #BA8A00; /* yellow.400 */
   --dv-cat-4: #B24A39; /* coral.600 */
   --dv-cat-5: #928DC9; /* purple.400 */
-  --dv-cat-6: #004C4C; /* green.800 */
-  --dv-seq-1: #C5EBE6; /* green.100 */
-  --dv-seq-2: #59BDB2; /* green.300 */
-  --dv-seq-3: #008D85; /* green.500 */
-  --dv-seq-4: #00605E; /* green.700 */
-  --dv-seq-5: #003838; /* green.900 */
+  --dv-seq-1: #C1EAFD; /* blue.100 */
+  --dv-seq-2: #3CC0FE; /* blue.300 */
+  --dv-seq-3: #0084CC; /* blue.500 */
+  --dv-seq-4: #0055A4; /* blue.700 */
+  --dv-seq-5: #052E6B; /* blue.900 */
   --dv-div-1: #B24A39; /* coral.600 */
   --dv-div-2: #E1715A; /* coral.400 */
   --dv-div-3: #FEB9A6; /* coral.200 */
@@ -120,17 +130,19 @@
   --dv-axis: #424242; /* grey.800 */
   --dv-muted: #949494; /* grey.400 */
   --dv-text: #F5F5F5; /* grey.50 */
+  --dv-total: #F5F5F5; /* grey.50 */
+  --dv-other: #7D7D7D; /* grey.500 */
+  --dv-missing: #424242; /* grey.800 */
   --dv-cat-1: #3CC0FE; /* blue.300 */
   --dv-cat-2: #008D85; /* green.500 */
   --dv-cat-3: #F3C000; /* yellow.200 */
   --dv-cat-4: #F29179; /* coral.300 */
   --dv-cat-5: #928DC9; /* purple.400 */
-  --dv-cat-6: #C5EBE6; /* green.100 */
-  --dv-seq-1: #003838; /* green.900 */
-  --dv-seq-2: #00605E; /* green.700 */
-  --dv-seq-3: #008D85; /* green.500 */
-  --dv-seq-4: #59BDB2; /* green.300 */
-  --dv-seq-5: #C5EBE6; /* green.100 */
+  --dv-seq-1: #052E6B; /* blue.900 */
+  --dv-seq-2: #0055A4; /* blue.700 */
+  --dv-seq-3: #0084CC; /* blue.500 */
+  --dv-seq-4: #3CC0FE; /* blue.300 */
+  --dv-seq-5: #C1EAFD; /* blue.100 */
   --dv-div-1: #E1715A; /* coral.400 */
   --dv-div-2: #B24A39; /* coral.600 */
   --dv-div-3: #702C23; /* coral.800 */

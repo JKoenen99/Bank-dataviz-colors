@@ -3,6 +3,7 @@
 // palette without knowing its values.
 
 import * as D from './data.js';
+import { SPEC, MAX_CATEGORICAL } from './palette.js';
 
 const nf = new Intl.NumberFormat('nl-NL');
 const nf1 = new Intl.NumberFormat('nl-NL', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
@@ -19,8 +20,17 @@ const esc = (s) =>
 const tip = (title, rows) => `data-tip="${esc(JSON.stringify({ t: title, r: rows }))}"`;
 
 const cat = (i) => `var(--cat-${i + 1})`;
+const OTHER = 'var(--other)';
+const TOTAL = 'var(--total)';
+const MISSING = 'var(--missing)';
 const sum = (a) => a.reduce((x, y) => x + y, 0);
-const GAP = 2; // surface gap between touching marks
+const { gap: GAP, radius: R, baseline: BASE_W, axis: AXIS_W } = SPEC;
+
+/**
+ * Colour for category i of `count`. Up to five categories each get their own
+ * colour; with more, every category gets the primary colour (slot 1).
+ */
+export const catColor = (i, count) => (count > MAX_CATEGORICAL ? cat(0) : cat(i));
 
 function ticks(min, max, target = 4) {
   const span = max - min || 1;
@@ -34,7 +44,7 @@ function ticks(min, max, target = 4) {
 }
 
 /** Bar with a rounded data end and a square end on the baseline. */
-function bar(x, y, w, h, end, r = 4) {
+function bar(x, y, w, h, end, r = R) {
   if (w <= 0 || h <= 0) return '';
   const rr = Math.min(r, w / 2, h / 2) * (end === 'none' ? 0 : 1);
   if (!rr) return `M${x},${y}h${w}v${h}h${-w}Z`;
@@ -44,16 +54,24 @@ function bar(x, y, w, h, end, r = 4) {
   return `M${x},${y}h${w}v${h}h${-w}Z`;
 }
 
-/** Horizontal gridlines, y tick labels and the baseline. */
+/** Horizontal gridlines (1px) and y tick labels. The base axis is drawn separately. */
 function yFrame({ m, pw, tk, y, fmt, baseline = 0 }) {
   let out = '';
   for (const t of tk) {
-    const isBase = t === baseline;
-    out += `<line x1="${m.l}" x2="${m.l + pw}" y1="${y(t)}" y2="${y(t)}" stroke="var(--${isBase ? 'axis' : 'grid'})"/>`;
+    if (t !== baseline) {
+      out += `<line x1="${m.l}" x2="${m.l + pw}" y1="${y(t)}" y2="${y(t)}" stroke="var(--grid)" stroke-width="${AXIS_W}"/>`;
+    }
     out += `<text x="${m.l - 8}" y="${y(t)}" dy="0.32em" text-anchor="end" class="tick">${esc(fmt(t))}</text>`;
   }
   return out;
 }
+
+/** The base axis: a 2px line. */
+const baseAxis = (x1, y1, x2, y2) =>
+  `<line x1="${x1}" x2="${x2}" y1="${y1}" y2="${y2}" stroke="var(--axis)" stroke-width="${BASE_W}"/>`;
+/** Other axis lines (crosshairs, guides): 1px. */
+const axisLine = (x1, y1, x2, y2, color = 'var(--axis)') =>
+  `<line x1="${x1}" x2="${x2}" y1="${y1}" y2="${y2}" stroke="${color}" stroke-width="${AXIS_W}"/>`;
 
 function xLabels({ labels, xAt, yPos, band }) {
   const every = Math.ceil(34 / band);
@@ -85,7 +103,7 @@ function columns({ w, h = 250, cats, series, stacked = false, label }) {
   let out = yFrame({ m, pw, tk, y, fmt: axisNum });
   cats.forEach((c, i) => {
     const rows = series.map((s) => [s.color, s.name, eur(s.values[i])]);
-    if (stacked) rows.push([null, 'Totaal', eur(sum(series.map((s) => s.values[i])))]);
+    if (stacked) rows.push([TOTAL, 'Totaal', eur(sum(series.map((s) => s.values[i])))]);
     let marks = '';
     if (stacked) {
       const bw = Math.min(24, band * 0.6);
@@ -106,10 +124,10 @@ function columns({ w, h = 250, cats, series, stacked = false, label }) {
         marks += `<path d="${bar(start + k * (bw + GAP), yy, bw, y(0) - yy, 'top')}" fill="${s.color}"/>`;
       });
     }
-    out += `<g class="band" ${tip(c, rows)}><rect class="hover" x="${m.l + band * i + 1}" y="${m.t}" width="${band - 2}" height="${ph}" rx="4"/>${marks}</g>`;
+    out += `<g class="band" ${tip(c, rows)}><rect class="hover" x="${m.l + band * i + 1}" y="${m.t}" width="${band - 2}" height="${ph}" rx="${R}"/>${marks}</g>`;
   });
-  // The baseline sits on top of the hover band.
-  out += `<line x1="${m.l}" x2="${m.l + pw}" y1="${y(0)}" y2="${y(0)}" stroke="var(--axis)"/>`;
+  // The base axis sits on top of the hover band.
+  out += baseAxis(m.l, y(0), m.l + pw, y(0));
   out += xLabels({ labels: cats, xAt, yPos: h - 6, band });
   return svg(w, h, out, label);
 }
@@ -128,6 +146,7 @@ function lines({ w, h = 250, x, series, label }) {
   const xAt = (i) => m.l + stepX * i;
 
   let out = yFrame({ m, pw, tk, y, fmt: axisNum, baseline: lo });
+  out += baseAxis(m.l, y(lo), m.l + pw, y(lo));
   for (const s of series) {
     const pts = s.values.map((v, i) => `${xAt(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ');
     out += `<polyline points="${pts}" fill="none" stroke="${s.color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
@@ -147,7 +166,7 @@ function lines({ w, h = 250, x, series, label }) {
     const dots = series
       .map((s) => `<circle cx="${xAt(i)}" cy="${y(s.values[i])}" r="4" fill="${s.color}" stroke="var(--surface)" stroke-width="2"/>`)
       .join('');
-    out += `<g class="xband" ${tip(label_, rows)}><rect x="${xAt(i) - stepX / 2}" y="${m.t}" width="${stepX}" height="${ph}" fill="transparent"/><g class="reveal"><line x1="${xAt(i)}" x2="${xAt(i)}" y1="${m.t}" y2="${m.t + ph}" stroke="var(--axis)"/>${dots}</g></g>`;
+    out += `<g class="xband" ${tip(label_, rows)}><rect x="${xAt(i) - stepX / 2}" y="${m.t}" width="${stepX}" height="${ph}" fill="transparent"/><g class="reveal">${axisLine(xAt(i), m.t, xAt(i), m.t + ph)}${dots}</g></g>`;
   });
   out += xLabels({ labels: x, xAt, yPos: h - 6, band: stepX });
   return svg(w, h, out, label);
@@ -183,35 +202,48 @@ function stackedArea({ w, h = 250, x, series, label }) {
   });
   x.forEach((label_, i) => {
     const rows = [...series].reverse().map((s) => [s.color, s.name, eurK(s.values[i])]);
-    rows.push([null, 'Totaal', eurK(totals[i])]);
-    out += `<g class="xband" ${tip(label_, rows)}><rect x="${xAt(i) - stepX / 2}" y="${m.t}" width="${stepX}" height="${ph}" fill="transparent"/><g class="reveal"><line x1="${xAt(i)}" x2="${xAt(i)}" y1="${m.t}" y2="${m.t + ph}" stroke="var(--text)"/></g></g>`;
+    rows.push([TOTAL, 'Totaal', eurK(totals[i])]);
+    out += `<g class="xband" ${tip(label_, rows)}><rect x="${xAt(i) - stepX / 2}" y="${m.t}" width="${stepX}" height="${ph}" fill="transparent"/><g class="reveal">${axisLine(xAt(i), m.t, xAt(i), m.t + ph, 'var(--text)')}</g></g>`;
   });
-  out += `<line x1="${m.l}" x2="${m.l + pw}" y1="${y(0)}" y2="${y(0)}" stroke="var(--axis)"/>`;
+  out += baseAxis(m.l, y(0), m.l + pw, y(0));
   out += xLabels({ labels: x, xAt, yPos: h - 6, band: stepX });
   return svg(w, h, out, label);
 }
 
-// --- Donut -----------------------------------------------------------------------
+// --- Pie ---------------------------------------------------------------------------
+// No donuts. Slices are cut with a real 2px gap: each straight edge moves 1px
+// into its own slice, so the gap is empty space, not a painted stroke.
 
-function donut({ w, segments, label }) {
+function pie({ w, segments, label }) {
   const size = Math.min(w, 230);
   const h = size;
   const cx = w / 2;
   const cy = h / 2;
-  const R = size / 2 - 4;
-  const r = R * 0.62;
+  const radius = size / 2 - 2;
+  const g = GAP / 2;
   const total = sum(segments.map((s) => s.value));
-  let a = -Math.PI / 2;
   const pt = (rad, ang) => `${(cx + rad * Math.cos(ang)).toFixed(2)},${(cy + rad * Math.sin(ang)).toFixed(2)}`;
+  let a = -Math.PI / 2;
   let out = '';
   for (const s of segments) {
-    const a1 = a + (s.value / total) * Math.PI * 2;
-    const large = a1 - a > Math.PI ? 1 : 0;
-    out += `<path class="mark" d="M${pt(R, a)}A${R},${R} 0 ${large} 1 ${pt(R, a1)}L${pt(r, a1)}A${r},${r} 0 ${large} 0 ${pt(r, a)}Z" fill="${s.color}" stroke="var(--surface)" stroke-width="${GAP}" ${tip(s.name, [[s.color, 'Aandeel', pct((s.value / total) * 100)]])}/>`;
+    const span = (s.value / total) * Math.PI * 2;
+    const a1 = a + span;
+    const t = tip(s.name, [[s.color, 'Aandeel', pct((s.value / total) * 100)]]);
+    let d;
+    if (segments.length === 1) {
+      d = `M${pt(radius, a)}A${radius},${radius} 0 1 1 ${pt(radius, a + Math.PI)}A${radius},${radius} 0 1 1 ${pt(radius, a)}Z`;
+    } else {
+      const delta = Math.asin(g / radius); // angle the 1px offset takes at the rim
+      const apex = g / Math.sin(span / 2); // where the two offset edges meet
+      const mid = a + span / 2;
+      const large = span - 2 * delta > Math.PI ? 1 : 0;
+      d = span > 2 * delta
+        ? `M${pt(apex, mid)}L${pt(radius, a + delta)}A${radius},${radius} 0 ${large} 1 ${pt(radius, a1 - delta)}Z`
+        : '';
+    }
+    if (d) out += `<path class="mark" d="${d}" fill="${s.color}" ${t}/>`;
     a = a1;
   }
-  out += `<text x="${cx}" y="${cy - 4}" text-anchor="middle" class="hero">€ 48,6K</text>`;
-  out += `<text x="${cx}" y="${cy + 16}" text-anchor="middle" class="tick">totaal belegd</text>`;
   return svg(w, h, out, label);
 }
 
@@ -227,6 +259,7 @@ function scatter({ w, h = 250, groups, label }) {
   const x = (v) => m.l + (v / xt.at(-1)) * pw;
   const y = (v) => m.t + ph - (v / yt.at(-1)) * ph;
   let out = yFrame({ m, pw, tk: yt, y, fmt: (v) => v + '%' });
+  out += baseAxis(m.l, y(0), m.l + pw, y(0));
   for (const t of xt) {
     out += `<text x="${x(t)}" y="${m.t + ph + 16}" text-anchor="middle" class="tick">${t}%</text>`;
   }
@@ -242,6 +275,7 @@ function scatter({ w, h = 250, groups, label }) {
 // --- Heatmap (sequential or diverging) -------------------------------------------
 
 function heatmap({ w, rows, cols, values, classOf, colorVar, fmt, labelW = 26, label }) {
+  // null = missing value, drawn in the reserved grey.
   const m = { t: 4, r: 4, b: 20, l: labelW };
   const cw = (w - m.l - m.r) / cols.length;
   const ch = Math.min(26, Math.max(18, cw * 0.8));
@@ -251,8 +285,9 @@ function heatmap({ w, rows, cols, values, classOf, colorVar, fmt, labelW = 26, l
     out += `<text x="${m.l - 8}" y="${m.t + ch * (ri + 0.5)}" dy="0.32em" text-anchor="end" class="tick">${esc(rName)}</text>`;
     cols.forEach((cName, ci) => {
       const v = values[ri][ci];
-      const color = `var(--${colorVar}-${classOf(v) + 1})`;
-      out += `<rect class="mark" x="${m.l + cw * ci + GAP / 2}" y="${m.t + ch * ri + GAP / 2}" width="${cw - GAP}" height="${ch - GAP}" rx="3" fill="${color}" ${tip(`${rName} · ${cName}`, [[color, 'Waarde', fmt(v)]])}/>`;
+      const missing = v == null;
+      const color = missing ? MISSING : `var(--${colorVar}-${classOf(v) + 1})`;
+      out += `<rect class="mark" x="${m.l + cw * ci + GAP / 2}" y="${m.t + ch * ri + GAP / 2}" width="${cw - GAP}" height="${ch - GAP}" rx="${R}" fill="${color}" ${tip(`${rName} · ${cName}`, [[color, 'Waarde', missing ? 'Geen data' : fmt(v)]])}/>`;
     });
   });
   out += xLabels({ labels: cols, xAt: (i) => m.l + cw * (i + 0.5), yPos: h - 5, band: cw });
@@ -275,12 +310,37 @@ function divergingBars({ w, items, label }) {
     const len = Math.max(1.5, Math.abs(d.value) * scale);
     const pos = d.value >= 0;
     const color = pos ? 'var(--div-neg)' : 'var(--div-pos)';
-    out += `<g class="band" ${tip(d.name, [[color, pos ? 'Boven budget' : 'Onder budget', signedPct(d.value)]])}><rect class="hover" x="0" y="${cy - rowH / 2 + 1}" width="${w}" height="${rowH - 2}" rx="4"/>`;
+    out += `<g class="band" ${tip(d.name, [[color, pos ? 'Boven budget' : 'Onder budget', signedPct(d.value)]])}><rect class="hover" x="0" y="${cy - rowH / 2 + 1}" width="${w}" height="${rowH - 2}" rx="${R}"/>`;
     out += `<text x="${m.l - 10}" y="${cy}" dy="0.32em" text-anchor="end" class="label">${esc(d.name)}</text>`;
     out += `<path d="${bar(pos ? zero : zero - len, cy - 7, len, 14, pos ? 'right' : 'left')}" fill="${color}"/>`;
     out += `<text x="${pos ? zero + len + 6 : zero - len - 6}" y="${cy}" dy="0.32em" text-anchor="${pos ? 'start' : 'end'}" class="value">${signedPct(d.value)}</text></g>`;
   });
-  out += `<line x1="${zero}" x2="${zero}" y1="${m.t}" y2="${h - m.b}" stroke="var(--axis)"/>`;
+  out += baseAxis(zero, m.t, zero, h - m.b);
+  return svg(w, h, out, label);
+}
+
+// --- Ranked horizontal bars --------------------------------------------------------
+
+function rankedBars({ w, items, average, label }) {
+  const rowH = 24;
+  const m = { t: 22, r: 64, b: 4, l: 104 };
+  const pw = w - m.l - m.r;
+  const h = m.t + rowH * items.length + m.b;
+  const max = Math.max(...items.map((d) => d.value));
+  const x = (v) => m.l + (v / max) * pw;
+  // The average is a distinct value: black in light mode, white in dark mode.
+  // Drawn first, so bars and their labels sit on top of it.
+  const ax = x(average);
+  let out = `<line x1="${ax}" x2="${ax}" y1="${m.t - 4}" y2="${h - m.b}" stroke="${TOTAL}" stroke-width="${BASE_W}" stroke-dasharray="4 3"/>`;
+  out += `<text x="${ax}" y="${m.t - 9}" text-anchor="middle" class="value">Gemiddeld ${eur(average)}</text>`;
+  items.forEach((d, i) => {
+    const cy = m.t + rowH * (i + 0.5);
+    out += `<g class="band" ${tip(d.name, [[d.color, 'December', eur(d.value)]])}><rect class="hover" x="0" y="${cy - rowH / 2 + 1}" width="${w}" height="${rowH - 2}" rx="${R}"/>`;
+    out += `<text x="${m.l - 10}" y="${cy}" dy="0.32em" text-anchor="end" class="label">${esc(d.name)}</text>`;
+    out += `<path d="${bar(m.l, cy - 7, x(d.value) - m.l, 14, 'right')}" fill="${d.color}"/>`;
+    out += `<text x="${x(d.value) + 6}" y="${cy}" dy="0.32em" class="value halo">${eur(d.value)}</text></g>`;
+  });
+  out += baseAxis(m.l, m.t - 4, m.l, h - m.b);
   return svg(w, h, out, label);
 }
 
@@ -295,12 +355,38 @@ export function sparkline(values, w = 96, h = 28) {
 
 // --- Chart catalogue ------------------------------------------------------------------
 
-const withColors = (series, n) => series.slice(0, n).map((s, i) => ({ ...s, color: cat(i) }));
+const withColors = (series, n) => {
+  const list = series.slice(0, n);
+  return list.map((s, i) => ({ ...s, color: catColor(i, list.length) }));
+};
+
+/**
+ * Keep the first n regular categories, fold the rest into "Overig". Regular
+ * categories get categorical colours, "Overig" always gets the reserved grey.
+ */
+function foldOther(list, n, combine) {
+  const regular = list.filter((s) => !s.other);
+  const others = [...regular.slice(n), ...list.filter((s) => s.other)];
+  const head = regular.slice(0, n).map((s, i) => ({ ...s, color: catColor(i, Math.min(n, regular.length)) }));
+  if (others.length) head.push({ ...combine(others), name: 'Overig', other: true, color: OTHER });
+  return head;
+}
+const addValues = (list) => ({ values: list[0].values.map((_, i) => sum(list.map((s) => s.values[i]))) });
+
+/** Legend; with more than five categories they share one colour, so one entry. */
+function legendOf(series, type) {
+  const regular = series.filter((s) => !s.other);
+  const items =
+    regular.length > MAX_CATEGORICAL
+      ? [{ label: `${regular.length} categorieën, meer dan 5: één kleur`, color: cat(0), type }]
+      : regular.map((s) => ({ label: s.name, color: s.color, type }));
+  for (const s of series.filter((x) => x.other)) items.push({ label: s.name, color: s.color, type });
+  return items;
+}
 const seriesTable = (first, cats, series, fmt) => ({
   head: [first, ...series.map((s) => s.name)],
   rows: cats.map((c, i) => [c, ...series.map((s) => fmt(s.values[i]))]),
 });
-const legendOf = (series, type) => series.map((s) => ({ label: s.name, color: s.color, type }));
 
 /** Class index for a value on a sequential scale with n classes. */
 const seqClass = (min, max, n) => (v) => Math.min(n - 1, Math.floor(((v - min) / (max - min || 1)) * n));
@@ -341,9 +427,9 @@ export const CHARTS = [
   {
     id: 'stacked',
     title: 'Uitgaven per categorie',
-    subtitle: 'Gestapeld, alle categorische kleuren',
+    subtitle: 'Gestapeld. Overig is altijd grijs, meer dan 5 categorieën worden één kleur',
     render({ w, n }) {
-      const series = withColors(D.spendByCategory.series, n);
+      const series = foldOther(D.spendByCategory.series, n, addValues);
       return {
         svg: columns({ w, cats: D.spendByCategory.cats, series, stacked: true, label: 'Uitgaven per categorie per maand' }),
         legend: legendOf(series, 'rect'),
@@ -354,7 +440,7 @@ export const CHARTS = [
   {
     id: 'lines',
     title: 'Koersontwikkeling fondsen',
-    subtitle: 'Index, januari = 100. Test voor dunne lijnen',
+    subtitle: 'Index, januari = 100. Meer dan 5 lijnen worden één kleur',
     render({ w, n }) {
       const series = withColors(D.funds.series, n);
       return {
@@ -378,16 +464,39 @@ export const CHARTS = [
     },
   },
   {
-    id: 'donut',
-    title: 'Portefeuilleverdeling',
-    subtitle: 'Aangrenzende segmenten',
-    render({ w, n }) {
-      const head = D.portfolio.slice(0, n);
-      const rest = sum(D.portfolio.slice(n).map((s) => s.value));
-      if (rest) head[n - 1] = { name: 'Overig', value: head[n - 1].value + rest };
-      const segments = head.map((s, i) => ({ ...s, color: cat(i) }));
+    id: 'ranked',
+    title: 'Uitgaven in december',
+    subtitle: 'Meer dan 5 categorieën: alles in de primaire kleur, gesorteerd',
+    render({ w }) {
+      const regular = D.spendByCategory.series.filter((s) => !s.other);
+      const other = D.spendByCategory.series.find((s) => s.other);
+      const items = [
+        ...regular
+          .map((s) => ({ name: s.name, value: s.values.at(-1) }))
+          .sort((a, b) => b.value - a.value)
+          .map((d, i, list) => ({ ...d, color: catColor(i, list.length) })),
+        { name: other.name, value: other.values.at(-1), color: OTHER },
+      ];
+      const average = sum(items.map((d) => d.value)) / items.length;
       return {
-        svg: donut({ w, segments, label: 'Verdeling van de beleggingsportefeuille' }),
+        svg: rankedBars({ w, items, average, label: 'Uitgaven per categorie in december' }),
+        legend: [
+          { label: 'Categorie', color: cat(0), type: 'rect' },
+          { label: 'Overig', color: OTHER, type: 'rect' },
+          { label: 'Gemiddelde', color: TOTAL, type: 'line' },
+        ],
+        table: { head: ['Categorie', 'December'], rows: [...items.map((d) => [d.name, eur(d.value)]), ['Gemiddeld', eur(average)]] },
+      };
+    },
+  },
+  {
+    id: 'pie',
+    title: 'Portefeuilleverdeling',
+    subtitle: 'Taart, geen donut. Maximaal 5 kleuren, de rest valt onder Overig',
+    render({ w, n }) {
+      const segments = foldOther(D.portfolio, Math.min(n, MAX_CATEGORICAL), (list) => ({ value: sum(list.map((s) => s.value)) }));
+      return {
+        svg: pie({ w, segments, label: 'Verdeling van de beleggingsportefeuille' }),
         legend: segments.map((s) => ({ label: s.name, value: s.value + '%', color: s.color, type: 'rect' })),
         table: { head: ['Categorie', 'Aandeel'], rows: segments.map((s) => [s.name, s.value + '%']) },
       };
@@ -398,7 +507,7 @@ export const CHARTS = [
     title: 'Risico en rendement',
     subtitle: 'Losse punten, elke kleur kan naast elke andere staan',
     render({ w }) {
-      const groups = D.riskReturn.map((g, i) => ({ ...g, color: cat(i) }));
+      const groups = D.riskReturn.map((g, i, list) => ({ ...g, color: catColor(i, list.length) }));
       return {
         svg: scatter({ w, groups, label: 'Risico tegenover rendement per fonds' }),
         legend: groups.map((g) => ({ label: g.name, color: g.color, type: 'dot' })),
@@ -412,17 +521,17 @@ export const CHARTS = [
   {
     id: 'heatmap',
     title: 'Betalingen per dag en uur',
-    subtitle: 'Sequentieel palet',
+    subtitle: 'Sequentieel palet. Ontbrekende waarden in het gereserveerde grijs',
     render({ w, tokens }) {
       const { rows, cols, values } = D.activity;
-      const flat = values.flat();
+      const flat = values.flat().filter((v) => v != null);
       const n = tokens.seq.length;
       const [lo, hi] = [Math.min(...flat), Math.max(...flat)];
       return {
         svg: heatmap({ w, rows, cols, values, classOf: seqClass(lo, hi, n), colorVar: 'seq', fmt: (v) => v + ' betalingen', label: 'Aantal betalingen per weekdag en uur' }),
         legend: [],
-        scale: { colorVar: 'seq', count: n, from: `${lo}`, to: `${hi} betalingen` },
-        table: { head: ['Dag', ...cols.map((c) => c + ' u')], rows: rows.map((r, i) => [r, ...values[i]]) },
+        scale: { colorVar: 'seq', count: n, from: `${lo}`, to: `${hi} betalingen`, missing: 'Geen data' },
+        table: { head: ['Dag', ...cols.map((c) => c + ' u')], rows: rows.map((r, i) => [r, ...values[i].map((v) => v ?? '–')]) },
       };
     },
   },

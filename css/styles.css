@@ -293,6 +293,12 @@ main {
   margin-bottom: 0;
 }
 
+.panel-head .inline-fields {
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+}
+
 .hint {
   font-size: 12px;
   color: var(--ink-muted);
@@ -373,7 +379,7 @@ main {
   height: 20px;
   padding: 0;
   border: 0;
-  border-radius: 3px;
+  border-radius: 4px;
   background: var(--c);
 }
 
@@ -541,7 +547,7 @@ main {
 .strip i {
   width: 26px;
   height: 16px;
-  border-radius: 3px;
+  border-radius: 4px;
 }
 
 /* --- Stages and charts -------------------------------------------------- */
@@ -698,10 +704,15 @@ main {
   font-size: 12px;
 }
 
-.hero {
-  fill: var(--text);
-  font-size: 20px;
-  font-weight: 650;
+.halo {
+  paint-order: stroke;
+  stroke: var(--surface);
+  stroke-width: 4px;
+  stroke-linejoin: round;
+}
+
+.band:hover .halo {
+  stroke: var(--backdrop);
 }
 
 .band .hover {
@@ -749,11 +760,12 @@ main {
   font-variant-numeric: tabular-nums;
 }
 
+/* Chart rule: 4px radius on anything that is rounded. */
 .key {
   flex: none;
-  width: 10px;
-  height: 10px;
-  border-radius: 2px;
+  width: 12px;
+  height: 12px;
+  border-radius: 4px;
 }
 
 .key.line {
@@ -784,7 +796,20 @@ main {
 
 .scale-legend .strip i {
   width: 22px;
-  height: 10px;
+  height: 12px;
+}
+
+.scale-missing {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-right: auto;
+}
+
+.scale-missing i {
+  width: 12px;
+  height: 12px;
+  border-radius: 4px;
 }
 
 .budgets {
