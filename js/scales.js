@@ -42,7 +42,7 @@ export const SCALE_DEFS = [
   {
     id: 'green',
     name: 'Green',
-    note: 'ABN AMRO Dark Green op 800. De middentonen (400-600) zijn het teal.',
+    note: 'ABN AMRO Dark Green op 800. De middentonen (400-600) zijn het teal: ook voor positief in schalen.',
     hue: [186, 186, 186, 186, 187, 188, 190, 192, 194.8, 195, 195],
     chroma: [0.02, 0.04, 0.07, 0.095, 0.11, 0.11, 0.1, 0.085, 0.064, 0.055, 0.045],
     pins: { 800: '#004C4C' },
@@ -78,6 +78,14 @@ export const SCALE_DEFS = [
     hue: [290, 289, 288, 288, 287.6, 287, 286, 285, 284, 284, 284],
     chroma: [0.014, 0.028, 0.05, 0.07, 0.088, 0.105, 0.115, 0.112, 0.098, 0.078, 0.056],
     pins: { 400: '#928DC9' },
+  },
+  {
+    id: 'red',
+    name: 'Red',
+    note: 'Negatief: de rode kant van divergerende schalen en de negatieve sequentiële schaal. Roder dan coral.',
+    hue: [18, 18, 19, 20, 22, 24, 25, 26, 26, 26, 26],
+    chroma: [0.02, 0.045, 0.09, 0.14, 0.18, 0.2, 0.195, 0.17, 0.14, 0.105, 0.075],
+    pins: {},
   },
   {
     id: 'grey',

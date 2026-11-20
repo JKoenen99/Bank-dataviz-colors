@@ -12,6 +12,7 @@ import {
   resolve,
   separation,
   scaleName,
+  RAMPS,
 } from './palette.js';
 import { contrast, normalizeHex, inkOn, CVD_MATRICES } from './color.js';
 import { CHARTS, sparkline, eur } from './charts.js';
@@ -80,8 +81,8 @@ function sanitize(raw) {
   }
   d.seq.scale = oneOf(raw.seq?.scale, SCALE_IDS, d.seq.scale);
   d.seq.classes = oneOf(Number(raw.seq?.classes), [3, 4, 5, 6, 7], d.seq.classes);
-  d.div.neg = oneOf(raw.div?.neg, HUE_SCALES, d.div.neg);
-  d.div.pos = oneOf(raw.div?.pos, HUE_SCALES, d.div.pos);
+  // Older links carried `div` (coral-blue); the ramps replace it.
+  for (const key of Object.keys(d.ramps)) d.ramps[key] = oneOf(raw.ramps?.[key], HUE_SCALES, d.ramps[key]);
   return d;
 }
 
@@ -238,6 +239,15 @@ function renderPanel() {
   const modeStrips = (key) =>
     MODES.map((mode) => `<div class="strip-row" data-surface="${mode}"><span class="mode-tag">${mode === 'light' ? 'Light' : 'Dark'}</span>${strip(resolved.tokens[mode][key])}</div>`).join('');
 
+  const rampBlock = (title, key, fields) => `
+      <div class="ramp">
+        <div class="inline-fields">
+          <b>${title}</b>
+          ${fields.map(([label, ramp]) => `<label>${label} <select data-act="ramp" data-ramp="${ramp}" data-fk="ramp-${ramp}">${options(HUE_SCALES, state.ramps[ramp], scaleName)}</select></label>`).join('')}
+        </div>
+        ${modeStrips(key)}
+      </div>`;
+
   $('#panel').innerHTML = `
     <section>
       <div class="panel-head">
@@ -266,14 +276,15 @@ function renderPanel() {
         <label>Klassen <select data-act="seq-classes" data-fk="seq-classes">${options([3, 4, 5, 6, 7], state.seq.classes)}</select></label>
       </div>
       ${modeStrips('seq')}
+      <p class="hint">Standaard blauw. Teal en rood zijn voor waarden die van nature positief of negatief zijn.</p>
+      ${rampBlock('Positief', 'seqPos', [['Schaal', 'seqPos']])}
+      ${rampBlock('Negatief', 'seqNeg', [['Schaal', 'seqNeg']])}
     </section>
     <section>
       <h3>Divergerend</h3>
-      <div class="inline-fields">
-        <label>Negatief <select data-act="div-neg" data-fk="div-neg">${options(HUE_SCALES, state.div.neg, scaleName)}</select></label>
-        <label>Positief <select data-act="div-pos" data-fk="div-pos">${options(HUE_SCALES, state.div.pos, scaleName)}</select></label>
-      </div>
-      ${modeStrips('div')}
+      <p class="hint">Standaard blauw–rood. Teal–rood mag als positief tegenover negatief duidelijk moet zijn.</p>
+      ${rampBlock('Standaard', 'div', [['Negatief', 'divNeg'], ['Positief', 'divPos']])}
+      ${rampBlock('Positief–negatief', 'divPosNeg', [['Negatief', 'posNegNeg'], ['Positief', 'posNegPos']])}
     </section>
     <section>
       <h3>Status</h3>
@@ -289,8 +300,7 @@ function stageVars(t) {
   for (const role of Object.keys(NEUTRAL_ROLES)) v[role] = t.neutral[role].hex;
   for (const role of Object.keys(DISTINCT_ROLES)) v[role] = t.distinct[role].hex;
   t.cat.forEach((c, i) => (v[`cat-${i + 1}`] = c.hex));
-  t.seq.forEach((c, i) => (v[`seq-${i + 1}`] = c.hex));
-  t.div.forEach((c, i) => (v[`div-${i + 1}`] = c.hex));
+  for (const ramp of RAMPS) t[ramp.key].forEach((c, i) => (v[`${ramp.css}-${i + 1}`] = c.hex));
   v['div-neg'] = t.div[0].hex;
   v['div-pos'] = t.div.at(-1).hex;
   for (const role of Object.keys(STATUS_ROLES)) v[`status-${role}`] = t.status[role].hex;
@@ -586,8 +596,7 @@ function bindEvents() {
       else if (act === 'demo-count') s.demoCount = +el.value;
       else if (act === 'seq-scale') s.seq.scale = el.value;
       else if (act === 'seq-classes') s.seq.classes = +el.value;
-      else if (act === 'div-neg') s.div.neg = el.value;
-      else if (act === 'div-pos') s.div.pos = el.value;
+      else if (act === 'ramp') s.ramps[el.dataset.ramp] = el.value;
     });
   });
 

@@ -123,6 +123,24 @@ export const activity = (() => {
   return { rows, cols, values };
 })();
 
+/** Positive by nature: amounts saved per goal. */
+export const savings = (() => {
+  const rows = ['Buffer', 'Vakantie', 'Auto', 'Verbouwing'];
+  const base = [420, 180, 260, 90];
+  const r = rng(31);
+  const values = rows.map((_, k) => MONTHS.map((_, m) => Math.round((base[k] * (0.5 + r() * 0.9) + (k === 1 && m > 3 && m < 7 ? -60 : 40)) / 10) * 10));
+  return { rows, cols: MONTHS, values };
+})();
+
+/** Negative by nature: days an account was overdrawn. */
+export const overdrawn = (() => {
+  const rows = ['Betaalrekening', 'Gezamenlijk', 'Zakelijk', 'Creditcard'];
+  const base = [3, 1.5, 6, 4];
+  const r = rng(58);
+  const values = rows.map((_, k) => MONTHS.map((_, m) => Math.max(0, Math.round(base[k] * (0.2 + r() * 1.6) + (m === 11 || m === 6 ? 3 : 0)))));
+  return { rows, cols: MONTHS, values };
+})();
+
 export const sectorReturns = (() => {
   const rows = ['Technologie', 'Financials', 'Gezondheidszorg', 'Energie', 'Consumptie', 'Vastgoed'];
   const bias = [1.2, 0.4, 0.5, -0.3, 0.2, -0.8];

@@ -384,6 +384,28 @@ main {
   font-size: 12px;
 }
 
+.ramp {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+
+.ramp .inline-fields {
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.ramp .inline-fields b {
+  color: var(--ink);
+  font-weight: 600;
+  margin-right: auto;
+}
+
+/* Two selects do not fit beside the title: give the title its own line. */
+.ramp .inline-fields b:has(~ label ~ label) {
+  flex-basis: 100%;
+}
+
 .mini-row,
 .strip-row {
   display: flex;

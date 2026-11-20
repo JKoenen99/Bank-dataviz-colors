@@ -5,7 +5,7 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { SCALE_DEFS, MIN_CONTRAST } from '../js/scales.js';
-import { DEFAULT_STATE, resolve, separation, MODES, NEUTRAL_ROLES, STATUS_ROLES, MAX_CATEGORICAL } from '../js/palette.js';
+import { DEFAULT_STATE, resolve, separation, MODES, NEUTRAL_ROLES, STATUS_ROLES, MAX_CATEGORICAL, RAMPS } from '../js/palette.js';
 import { toCss, toJson } from '../js/export.js';
 
 const resolved = resolve(DEFAULT_STATE);
@@ -29,6 +29,12 @@ for (const def of SCALE_DEFS) {
 if (DEFAULT_STATE.cat.length > MAX_CATEGORICAL) fail(`${DEFAULT_STATE.cat.length} categorische kleuren, maximaal ${MAX_CATEGORICAL}`);
 DEFAULT_STATE.cat.forEach((c, i) => c.scale === 'grey' && fail(`cat-${i + 1} is grijs: grijs is gereserveerd voor bijzondere waarden`));
 if (DEFAULT_STATE.seq.scale !== 'blue') fail(`sequentieel standaard ${DEFAULT_STATE.seq.scale}, verwacht blue`);
+
+// 2b. Ramp rule: teal (green scale) is positive, red is negative, diverging is blue-red by default.
+const EXPECTED_RAMPS = { seqPos: 'green', seqNeg: 'red', divNeg: 'red', divPos: 'blue', posNegNeg: 'red', posNegPos: 'green' };
+for (const [key, scale] of Object.entries(EXPECTED_RAMPS)) {
+  if (DEFAULT_STATE.ramps[key] !== scale) fail(`${key} gebruikt ${DEFAULT_STATE.ramps[key]}, verwacht ${scale}`);
+}
 
 // 3. Role rule: every mark colour reaches 3:1, label text reaches 4.5:1.
 //    Distinct values: total and other are marks, missing may stay recessive.
@@ -61,6 +67,7 @@ for (const mode of MODES) {
   console.log(`  zwakste paar: ${sep.normal.value.toFixed(1)} (${sep.normal.pair}), kleurenblind ${sep.cvd.value.toFixed(1)} (${sep.cvd.pair})`);
   console.log(`  ${Object.keys(NEUTRAL_ROLES).map((r) => `${r} ${t.neutral[r].hex}`).join('  ')}`);
   console.log(`  ${Object.entries(t.distinct).map(([r, c]) => `${r} ${c.hex}`).join('  ')}`);
+  for (const ramp of RAMPS) console.log(`  ${ramp.css.padEnd(10)} ${t[ramp.key].map((c) => c.hex).join(' ')}`);
   console.log(`  status (Emerald): ${Object.entries(t.status).map(([r, c]) => `${r} ${c.hex} ${c.contrast.toFixed(2)}:1`).join('  ')}`);
 }
 

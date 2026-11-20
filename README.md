@@ -55,6 +55,7 @@ De merkkleuren zitten exact in de schaal, op de stap waar hun contrast al bij pa
 
 Teal is geen aparte schaal maar het midden van de groene schaal (green 400 tot en met 600).
 Geel wordt in light mode oker/goud (yellow 400 en donkerder), omdat geel op wit geen 3:1 kan halen.
+Rood is de negatieve kant: in divergerende schalen en in de negatieve sequentiële schaal.
 Statuskleuren komen niet uit deze schalen maar uit Emerald, zie [Status](#status).
 
 ## Chartregels
@@ -66,7 +67,9 @@ Statuskleuren komen niet uit deze schalen maar uit Emerald, zie [Status](#status
 - **Categorisch:** 5 kleuren in vaste volgorde. Meer dan 5 categorieën: alles in kleur 1, de primaire blauw.
 - **Grijs, zwart en wit** zijn geen categorische kleuren. Ze zijn gereserveerd voor bijzondere waarden:
   totalen en gemiddelden, Overig en ontbrekende data.
-- **Sequentieel** is standaard blauw.
+- **Sequentieel** is standaard blauw. Voor waarden die van nature positief zijn (winst, groei, gespaard) is er
+  een teal schaal, voor waarden die van nature negatief zijn (verlies, kosten, roodstand) een rode.
+- **Divergerend** is standaard blauw–rood. Teal–rood mag als positief tegenover negatief duidelijk moet zijn.
 
 Met *Voorbeelden tonen* in het paneel kies je hoeveel categorieën de charts tonen (2 tot en met 8), zodat je
 de overgang naar één kleur ziet.
@@ -90,6 +93,19 @@ Bijzondere waarden:
 | Ontbrekend | grey 200 `#C9C9C9` | grey 800 `#424242` |
 
 Ontbrekend blijft bewust onder 3:1: het moet terugvallen. Totaal en Overig halen 3:1.
+
+### Schalen voor waarden
+
+| Token | Gebruik | Schaal |
+| --- | --- | --- |
+| `dv-seq-*` | Sequentieel, standaard | blue |
+| `dv-seq-pos-*` | Sequentieel positief | green (teal) |
+| `dv-seq-neg-*` | Sequentieel negatief | red |
+| `dv-div-*` | Divergerend, standaard | red, grey, blue |
+| `dv-div-posneg-*` | Divergerend positief–negatief | red, grey, green (teal) |
+
+Sequentieel loopt van stap 100 naar 900 en is in dark mode gespiegeld (laag is donker). Divergerend heeft zeven
+klassen: drie rode, een grijs midden en drie blauwe of teal. Klasse 1 is de sterkste negatieve.
 
 ### Status
 
@@ -117,7 +133,7 @@ index.html            de playground
 css/styles.css        opmaak van de tool
 js/color.js           kleurwiskunde (OKLCH, WCAG contrast, kleurenblind-simulatie)
 js/scales.js          definitie en generator van de kleurschalen
-js/palette.js         rollen (categorisch, grijs, bijzonder, sequentieel, divergerend), status uit Emerald, chartmaten
+js/palette.js         rollen (categorisch, grijs, bijzonder), schalen voor waarden, status uit Emerald, chartmaten
 js/charts.js          de voorbeeldcharts (SVG)
 js/data.js            fictieve voorbeelddata
 js/export.js          export naar CSS variabelen en JSON, lijst met semantische tokens

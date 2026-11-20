@@ -38,7 +38,17 @@ export const DEFAULT_STATE = {
     missing: { light: 200, dark: 800 },
   },
   seq: { scale: 'blue', classes: 5 },
-  div: { neg: 'coral', pos: 'blue' },
+  // Which scale feeds each ramp. Sequential is blue by default; teal and red
+  // are for data that is positive or negative by nature. Diverging is
+  // blue-red by default; teal-red stresses positive against negative.
+  ramps: {
+    seqPos: 'green',
+    seqNeg: 'red',
+    divNeg: 'red',
+    divPos: 'blue',
+    posNegNeg: 'red',
+    posNegPos: 'green',
+  },
 };
 
 // Status colours are not ours to choose: they are the feedback colours of
@@ -95,6 +105,15 @@ export const STATUS_ROLES = {
   neutral: 'Neutraal',
 };
 
+/** Every colour ramp: token key, CSS name and what it is for. */
+export const RAMPS = [
+  { key: 'seq', css: 'seq', kind: 'seq', title: 'Sequentieel', note: 'Standaard, blauw. Van laag naar hoog.' },
+  { key: 'seqPos', css: 'seq-pos', kind: 'seq', title: 'Sequentieel positief', note: 'Teal, voor waarden die van nature positief zijn: winst, groei, gespaard.' },
+  { key: 'seqNeg', css: 'seq-neg', kind: 'seq', title: 'Sequentieel negatief', note: 'Rood, voor waarden die van nature negatief zijn: verlies, kosten, roodstand.' },
+  { key: 'div', css: 'div', kind: 'div', title: 'Divergerend', note: 'Standaard, blauw–rood. Twee kanten rond een neutraal midden.' },
+  { key: 'divPosNeg', css: 'div-posneg', kind: 'div', title: 'Divergerend positief–negatief', note: 'Teal–rood, als positief tegenover negatief duidelijk moet zijn.' },
+];
+
 export const scaleName = (id) => SCALE_DEFS.find((d) => d.id === id)?.name ?? id;
 
 /** n steps spread evenly between 100 and 900. */
@@ -133,6 +152,14 @@ export function resolve(state) {
       const s = STATUS[role];
       status[role] = withContrast({ hex: s[mode].hex, ref: `Emerald ${s[mode].ref}`, token: s.token });
     }
+    const sequential = (scale) =>
+      sequentialSteps(state.seq.classes).map((step) => withContrast(pick(scale, forMode(mode, step))));
+    const diverging = (neg, pos) =>
+      [
+        ...[...DIV_ARM].reverse().map((step) => pick(neg, forMode(mode, step))),
+        pick('grey', forMode(mode, DIV_MID)),
+        ...DIV_ARM.map((step) => pick(pos, forMode(mode, step))),
+      ].map(withContrast);
     tokens[mode] = {
       surface,
       neutral,
@@ -140,14 +167,11 @@ export function resolve(state) {
       cat: state.cat
         .slice(0, MAX_CATEGORICAL)
         .map((slot) => ({ name: slot.name, ...withContrast(pick(slot.scale, slot[mode])) })),
-      seq: sequentialSteps(state.seq.classes).map((step) =>
-        withContrast(pick(state.seq.scale, forMode(mode, step))),
-      ),
-      div: [
-        ...[...DIV_ARM].reverse().map((step) => pick(state.div.neg, forMode(mode, step))),
-        pick('grey', forMode(mode, DIV_MID)),
-        ...DIV_ARM.map((step) => pick(state.div.pos, forMode(mode, step))),
-      ].map(withContrast),
+      seq: sequential(state.seq.scale),
+      seqPos: sequential(state.ramps.seqPos),
+      seqNeg: sequential(state.ramps.seqNeg),
+      div: diverging(state.ramps.divNeg, state.ramps.divPos),
+      divPosNeg: diverging(state.ramps.posNegNeg, state.ramps.posNegPos),
       status,
     };
   }

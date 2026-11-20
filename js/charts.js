@@ -397,6 +397,46 @@ const divClass = (max) => (v) => {
   return v < 0 ? 3 - k : 3 + k;
 };
 
+/** Heatmap on one of the sequential ramps. */
+function seqHeatmap({ id, title, subtitle, colorVar, key, data, fmt, head }) {
+  return {
+    id,
+    title,
+    subtitle,
+    render({ w, tokens }) {
+      const { rows, cols, values } = data;
+      const flat = values.flat();
+      const n = tokens[key].length;
+      const [lo, hi] = [Math.min(...flat), Math.max(...flat)];
+      return {
+        svg: heatmap({ w, rows, cols, values, classOf: seqClass(lo, hi, n), colorVar, fmt, labelW: 104, label: title }),
+        legend: [],
+        scale: { colorVar, count: n, from: fmt(lo), to: fmt(hi) },
+        table: { head: [head, ...cols], rows: rows.map((r, i) => [r, ...values[i].map(fmt)]) },
+      };
+    },
+  };
+}
+
+/** The same returns on either diverging ramp, so the two can be compared. */
+function returnsHeatmap({ id, subtitle, colorVar }) {
+  return {
+    id,
+    title: 'Maandrendement per sector',
+    subtitle,
+    render({ w }) {
+      const { rows, cols, values } = D.sectorReturns;
+      const max = Math.max(...values.flat().map(Math.abs));
+      return {
+        svg: heatmap({ w, rows, cols, values, classOf: divClass(max), colorVar, fmt: signedPct, labelW: 104, label: 'Maandrendement per sector' }),
+        legend: [],
+        scale: { colorVar, count: 7, from: signedPct(-max), to: signedPct(max) },
+        table: { head: ['Sector', ...cols], rows: rows.map((r, i) => [r, ...values[i].map(signedPct)]) },
+      };
+    },
+  };
+}
+
 export const CHARTS = [
   {
     id: 'single',
@@ -535,25 +575,32 @@ export const CHARTS = [
       };
     },
   },
-  {
-    id: 'divmap',
-    title: 'Maandrendement per sector',
-    subtitle: 'Divergerend palet, neutraal midden',
-    render({ w }) {
-      const { rows, cols, values } = D.sectorReturns;
-      const max = Math.max(...values.flat().map(Math.abs));
-      return {
-        svg: heatmap({ w, rows, cols, values, classOf: divClass(max), colorVar: 'div', fmt: signedPct, labelW: 104, label: 'Maandrendement per sector' }),
-        legend: [],
-        scale: { colorVar: 'div', count: 7, from: signedPct(-max), to: signedPct(max) },
-        table: { head: ['Sector', ...cols], rows: rows.map((r, i) => [r, ...values[i].map(signedPct)]) },
-      };
-    },
-  },
+  seqHeatmap({
+    id: 'seq-pos',
+    title: 'Gespaard per spaardoel',
+    subtitle: 'Sequentieel positief: teal voor van nature positieve waarden',
+    colorVar: 'seq-pos',
+    key: 'seqPos',
+    data: D.savings,
+    fmt: eur,
+    head: 'Spaardoel',
+  }),
+  seqHeatmap({
+    id: 'seq-neg',
+    title: 'Dagen rood gestaan',
+    subtitle: 'Sequentieel negatief: rood voor van nature negatieve waarden',
+    colorVar: 'seq-neg',
+    key: 'seqNeg',
+    data: D.overdrawn,
+    fmt: (v) => `${v} ${v === 1 ? 'dag' : 'dagen'}`,
+    head: 'Rekening',
+  }),
+  returnsHeatmap({ id: 'divmap', subtitle: 'Divergerend, standaard: blauw–rood rond een neutraal midden', colorVar: 'div' }),
+  returnsHeatmap({ id: 'divmap-posneg', subtitle: 'Divergerend positief–negatief: teal–rood maakt winst en verlies duidelijk', colorVar: 'div-posneg' }),
   {
     id: 'deviation',
     title: 'Afwijking van budget',
-    subtitle: 'Divergerend: boven of onder budget',
+    subtitle: 'Divergerend, standaard blauw–rood: boven of onder budget',
     render({ w }) {
       return {
         svg: divergingBars({ w, items: D.budgetDeviation, label: 'Afwijking van budget per categorie' }),

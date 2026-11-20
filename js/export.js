@@ -1,7 +1,7 @@
 // Token export: CSS custom properties and JSON.
 
 import { STEPS } from './scales.js';
-import { NEUTRAL_ROLES, DISTINCT_ROLES, STATUS_ROLES, MODES, SPEC, MAX_CATEGORICAL } from './palette.js';
+import { NEUTRAL_ROLES, DISTINCT_ROLES, STATUS_ROLES, MODES, SPEC, MAX_CATEGORICAL, RAMPS } from './palette.js';
 
 function modeVars(t) {
   const lines = [`  --dv-surface: ${t.surface};`];
@@ -12,8 +12,9 @@ function modeVars(t) {
     lines.push(`  --dv-${role}: ${t.distinct[role].hex}; /* ${t.distinct[role].ref} */`);
   }
   t.cat.forEach((c, i) => lines.push(`  --dv-cat-${i + 1}: ${c.hex}; /* ${c.ref} */`));
-  t.seq.forEach((c, i) => lines.push(`  --dv-seq-${i + 1}: ${c.hex}; /* ${c.ref} */`));
-  t.div.forEach((c, i) => lines.push(`  --dv-div-${i + 1}: ${c.hex}; /* ${c.ref} */`));
+  for (const ramp of RAMPS) {
+    t[ramp.key].forEach((c, i) => lines.push(`  --dv-${ramp.css}-${i + 1}: ${c.hex}; /* ${c.ref} */`));
+  }
   for (const role of Object.keys(STATUS_ROLES)) {
     lines.push(`  --dv-status-${role}: ${t.status[role].hex}; /* ${t.status[role].token}, ${t.status[role].ref} */`);
   }
@@ -60,6 +61,8 @@ export function toJson({ scales, tokens }) {
       moreCategories: 'Meer categorieën: alles in categorical[0]',
       reservedGrey: 'Grijs, zwart en wit alleen voor distinct (totaal, gemiddelde, overig, ontbrekend)',
       pie: 'Taart toegestaan, donut niet',
+      sequential: 'Standaard blauw. Teal voor van nature positieve waarden, rood voor van nature negatieve waarden',
+      diverging: 'Standaard blauw-rood. Teal-rood als positief tegenover negatief duidelijk moet zijn',
       status: 'Statuskleuren zijn de feedbackkleuren van Emerald. Altijd met icoon of label. Geen warning, geen informative in charts',
       gap: SPEC.gap,
       radius: SPEC.radius,
@@ -82,7 +85,10 @@ export function toJson({ scales, tokens }) {
       distinct: Object.fromEntries(Object.keys(DISTINCT_ROLES).map((r) => [r, slim(t.distinct[r])])),
       categorical: t.cat.map((c) => ({ name: c.name, ...slim(c) })),
       sequential: t.seq.map(slim),
+      sequentialPositive: t.seqPos.map(slim),
+      sequentialNegative: t.seqNeg.map(slim),
       diverging: t.div.map(slim),
+      divergingPositiveNegative: t.divPosNeg.map(slim),
       status: Object.fromEntries(Object.keys(STATUS_ROLES).map((r) => [r, { token: t.status[r].token, ...slim(t.status[r]) }])),
     };
   }
@@ -124,23 +130,20 @@ export function semanticGroups(tokens) {
       note: `Vaste volgorde. Meer dan ${MAX_CATEGORICAL} categorieën: alles in dv-cat-1.`,
       rows: L.cat.map((c, i) => ({ name: `dv-cat-${i + 1}`, role: `Kleur ${i + 1} · ${c.name}`, light: c, dark: D.cat[i] })),
     },
-    {
-      id: 'sequential',
-      title: 'Sequentieel',
-      note: 'Van laag naar hoog. In dark mode loopt de schaal gespiegeld: laag is donker.',
-      rows: L.seq.map((c, i) => ({
-        name: `dv-seq-${i + 1}`,
-        role: `Klasse ${i + 1} van ${nSeq}${i === 0 ? ' (laag)' : i === nSeq - 1 ? ' (hoog)' : ''}`,
+    ...RAMPS.map((ramp) => ({
+      id: ramp.css,
+      title: ramp.title,
+      note: ramp.kind === 'seq' ? `${ramp.note} In dark mode gespiegeld: laag is donker.` : ramp.note,
+      rows: L[ramp.key].map((c, i) => ({
+        name: `dv-${ramp.css}-${i + 1}`,
+        role:
+          ramp.kind === 'seq'
+            ? `Klasse ${i + 1} van ${nSeq}${i === 0 ? ' (laag)' : i === nSeq - 1 ? ' (hoog)' : ''}`
+            : (DIV_LABELS[i] ?? `Stap ${i + 1}`),
         light: c,
-        dark: D.seq[i],
+        dark: D[ramp.key][i],
       })),
-    },
-    {
-      id: 'diverging',
-      title: 'Divergerend',
-      note: null,
-      rows: L.div.map((c, i) => ({ name: `dv-div-${i + 1}`, role: DIV_LABELS[i] ?? `Stap ${i + 1}`, light: c, dark: D.div[i] })),
-    },
+    })),
     {
       id: 'status',
       title: 'Status',
