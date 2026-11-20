@@ -1,3 +1,20 @@
+/* Inter is bundled so the Figma export measures and pastes with the same font. */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('../vendor/fonts/inter-latin-400-normal.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('../vendor/fonts/inter-latin-600-normal.woff2') format('woff2');
+}
+
 /* Playground chrome. Chart colours come from the stage's inline variables,
    the values below only style the tool around the charts. */
 
@@ -245,8 +262,37 @@ main {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  margin-left: auto;
   white-space: nowrap;
+}
+
+.head-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-left: auto;
+}
+
+.block-head .figma-hint {
+  flex-basis: 100%;
+  font-size: 13px;
+}
+
+.block-head code,
+.figma-hint code {
+  font: 12px var(--mono);
+}
+
+/* --- Semantic tokens ---------------------------------------------------- */
+
+.sheet-wrap {
+  overflow: auto;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+}
+
+.sheet-wrap > div {
+  /* The sheet carries its own inline styles: it is what gets copied to Figma. */
+  margin: 0;
 }
 
 .workbench {

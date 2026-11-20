@@ -87,3 +87,64 @@ export function toJson({ scales, tokens }) {
   }
   return JSON.stringify(out, null, 2) + '\n';
 }
+
+const DIV_LABELS = ['Negatief sterk', 'Negatief', 'Negatief zwak', 'Midden', 'Positief zwak', 'Positief', 'Positief sterk'];
+
+/**
+ * Every semantic token, grouped, with its light and dark value. The names
+ * match the CSS custom properties without the leading `--`.
+ */
+export function semanticGroups(tokens) {
+  const { light: L, dark: D } = tokens;
+  const surface = (mode) => ({ hex: tokens[mode].surface, ref: 'surface', contrast: 1 });
+  const nSeq = L.seq.length;
+  return [
+    {
+      id: 'surface',
+      title: 'Surface',
+      note: 'De achtergrond waarop de chart staat. Alle contrastratio’s zijn hierop berekend.',
+      rows: [{ name: 'dv-surface', role: 'Achtergrond', light: surface('light'), dark: surface('dark') }],
+    },
+    {
+      id: 'neutral',
+      title: 'Grijs: backdrop en lijnen',
+      note: null,
+      rows: Object.entries(NEUTRAL_ROLES).map(([r, label]) => ({ name: `dv-${r}`, role: label, light: L.neutral[r], dark: D.neutral[r] })),
+    },
+    {
+      id: 'distinct',
+      title: 'Bijzondere waarden',
+      note: 'Grijs, zwart en wit: alleen voor totalen en gemiddelden, Overig en ontbrekende data.',
+      rows: Object.entries(DISTINCT_ROLES).map(([r, label]) => ({ name: `dv-${r}`, role: label, light: L.distinct[r], dark: D.distinct[r] })),
+    },
+    {
+      id: 'categorical',
+      title: 'Categorisch',
+      note: `Vaste volgorde. Meer dan ${MAX_CATEGORICAL} categorieën: alles in dv-cat-1.`,
+      rows: L.cat.map((c, i) => ({ name: `dv-cat-${i + 1}`, role: `Kleur ${i + 1} · ${c.name}`, light: c, dark: D.cat[i] })),
+    },
+    {
+      id: 'sequential',
+      title: 'Sequentieel',
+      note: 'Van laag naar hoog. In dark mode loopt de schaal gespiegeld: laag is donker.',
+      rows: L.seq.map((c, i) => ({
+        name: `dv-seq-${i + 1}`,
+        role: `Klasse ${i + 1} van ${nSeq}${i === 0 ? ' (laag)' : i === nSeq - 1 ? ' (hoog)' : ''}`,
+        light: c,
+        dark: D.seq[i],
+      })),
+    },
+    {
+      id: 'diverging',
+      title: 'Divergerend',
+      note: null,
+      rows: L.div.map((c, i) => ({ name: `dv-div-${i + 1}`, role: DIV_LABELS[i] ?? `Stap ${i + 1}`, light: c, dark: D.div[i] })),
+    },
+    {
+      id: 'status',
+      title: 'Status',
+      note: 'Altijd samen met een icoon of label, nooit alleen kleur.',
+      rows: Object.entries(STATUS_ROLES).map(([r, label]) => ({ name: `dv-status-${r}`, role: label, light: L.status[r], dark: D.status[r] })),
+    },
+  ];
+}

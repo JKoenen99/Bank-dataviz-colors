@@ -15,6 +15,19 @@ dependencies.
 
 Aanpassingen worden in de URL bewaard. Met **Deel link** stuur je precies jouw variant door.
 
+## Naar Figma
+
+Twee knoppen **Kopieer naar Figma** zetten een sheet op het klembord in het eigen formaat van Figma. Plak met
+⌘V / Ctrl+V en je krijgt in één keer bewerkbare auto layout layers, met de huidige aanpassingen:
+
+- **Kleurschalen:** frame `Dataviz kleurschalen` met per schaal een auto layout rij (`blue`, `green`, …) en per
+  stap een frame `blue/500` met kleurvlak, hex en contrast op light en dark.
+- **Semantische tokens:** frame `Dataviz semantische tokens` met per token een rij (`dv-cat-1`, `dv-backdrop`,
+  …): rol, en de light en dark waarde met schaalstap, hex en contrast. Dit overzicht staat ook op de pagina.
+
+Werkt in Chrome, Edge, Safari en Firefox (recente versies), via `https` of `localhost`. Tekst staat in Inter, dat
+in Figma standaard beschikbaar is.
+
 ## Het idee: contrast hoort bij de stap
 
 Elke schaal heeft elf stappen (50 tot en met 1000) en elke stap heeft in elke schaal hetzelfde contrast.
@@ -91,7 +104,9 @@ js/scales.js          definitie en generator van de kleurschalen
 js/palette.js         rollen (categorisch, grijs, bijzonder, sequentieel, divergerend, status) en chartmaten
 js/charts.js          de voorbeeldcharts (SVG)
 js/data.js            fictieve voorbeelddata
-js/export.js          export naar CSS variabelen en JSON
+js/export.js          export naar CSS variabelen en JSON, lijst met semantische tokens
+js/figma.js           sheets voor Figma (kleurschalen, semantische tokens) en kopiëren naar het klembord
+vendor/               DOM naar Figma converter en het Inter font, zie vendor/README.md
 js/app.js             UI en state
 scripts/build-tokens.mjs  controleert de regels en schrijft tokens/
 ```

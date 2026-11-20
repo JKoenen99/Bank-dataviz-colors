@@ -19,6 +19,7 @@
       <nav aria-label="Secties">
         <a href="#charts">Charts</a>
         <a href="#kleurschalen">Kleurschalen</a>
+        <a href="#semantisch">Semantische tokens</a>
         <a href="#tokens">Tokens</a>
       </nav>
       <div class="controls">
@@ -61,9 +62,30 @@
             achtergrond met de contrastratio; een doorgestreepte chip haalt geen 3:1. Klik een kleur om hem aan te
             passen.
           </p>
-          <label class="check"><input type="checkbox" id="use-pins" /> Merkkleuren exact vastzetten (★)</label>
+          <div class="head-actions">
+            <label class="check"><input type="checkbox" id="use-pins" /> Merkkleuren exact vastzetten (★)</label>
+            <button type="button" class="figma-copy" data-sheet="scales">Kopieer naar Figma</button>
+          </div>
+          <p class="figma-hint">
+            Kopieert alle schalen met de huidige aanpassingen. Plak in Figma (⌘V / Ctrl+V): elke schaal is een auto
+            layout rij, elke stap een eigen frame met naam, bijvoorbeeld <code>blue/500</code>.
+          </p>
         </div>
         <div id="scales"></div>
+      </section>
+
+      <section id="semantisch" class="block">
+        <div class="block-head">
+          <h2>Semantische tokens</h2>
+          <p>
+            Welke token welke kleur is, per mode. De namen zijn gelijk aan de CSS variabelen (met <code>--</code>
+            ervoor) en volgen de keuzes in het paneel bij de charts.
+          </p>
+          <div class="head-actions">
+            <button type="button" class="figma-copy" data-sheet="tokens">Kopieer naar Figma</button>
+          </div>
+        </div>
+        <div id="semantic" class="sheet-wrap" tabindex="0" aria-label="Overzicht semantische tokens"></div>
       </section>
 
       <section id="tokens" class="block">

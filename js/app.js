@@ -17,6 +17,7 @@ import { contrast, normalizeHex, inkOn, CVD_MATRICES } from './color.js';
 import { CHARTS, sparkline, eur } from './charts.js';
 import * as D from './data.js';
 import { toCss, toJson } from './export.js';
+import { buildScalesSheet, buildTokensSheet, copySheetToFigma } from './figma.js';
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const esc = (s) =>
@@ -155,6 +156,7 @@ function render() {
   renderPanel();
   renderStages();
   renderScales();
+  renderSemantic();
   renderTokens();
   if (focusKey) document.querySelector(`[data-fk="${CSS.escape(focusKey)}"]`)?.focus({ preventScroll: true });
 }
@@ -433,6 +435,30 @@ function renderScales() {
   }
 }
 
+// Semantic tokens -----------------------------------------------------------------
+
+/** The overview on the page is the same sheet that is copied to Figma. */
+function renderSemantic() {
+  $('#semantic').replaceChildren(buildTokensSheet(resolved));
+}
+
+const SHEETS = { scales: buildScalesSheet, tokens: buildTokensSheet };
+
+async function copyToFigma(button) {
+  const original = button.textContent;
+  button.disabled = true;
+  button.textContent = 'Bezig met kopiëren…';
+  try {
+    await copySheetToFigma(SHEETS[button.dataset.sheet](resolved));
+    button.textContent = 'Gekopieerd, plak in Figma';
+  } catch (err) {
+    console.error(err);
+    button.textContent = 'Kopiëren lukt niet';
+  }
+  button.disabled = false;
+  setTimeout(() => (button.textContent = original), 2400);
+}
+
 // Tokens --------------------------------------------------------------------------
 
 function renderTokens() {
@@ -612,6 +638,10 @@ function bindEvents() {
     dialog.close();
   });
   $('#dlg-cancel').addEventListener('click', () => dialog.close());
+
+  for (const b of document.querySelectorAll('.figma-copy')) {
+    b.addEventListener('click', () => copyToFigma(b));
+  }
 
   $('#token-tabs').addEventListener('click', (e) => {
     const b = e.target.closest('button[data-tab]');
