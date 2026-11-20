@@ -55,7 +55,7 @@ De merkkleuren zitten exact in de schaal, op de stap waar hun contrast al bij pa
 
 Teal is geen aparte schaal maar het midden van de groene schaal (green 400 tot en met 600).
 Geel wordt in light mode oker/goud (yellow 400 en donkerder), omdat geel op wit geen 3:1 kan halen.
-Rood is toegevoegd voor statuskleuren.
+Statuskleuren komen niet uit deze schalen maar uit Emerald, zie [Status](#status).
 
 ## Chartregels
 
@@ -91,6 +91,22 @@ Bijzondere waarden:
 
 Ontbrekend blijft bewust onder 3:1: het moet terugvallen. Totaal en Overig halen 3:1.
 
+### Status
+
+Statuskleuren zijn de feedbackkleuren van Emerald (het UI design system), zodat een status in een chart dezelfde
+kleur heeft als in de interface eromheen. Ze staan vast in `STATUS` in `js/palette.js` en zijn in de playground
+niet aanpasbaar.
+
+| Rol | Emerald token | Light | Dark |
+| --- | --- | --- | --- |
+| Positief | `icon/feedback/positive` | `#007F42` (color/green/750) | `#75B12B` (color/green/570) |
+| Negatief | `icon/feedback/negative` | `#C21700` (color/red/620) | `#E45F4E` (color/red/400) |
+| Neutraal | `icon/feedback/neutral` | `#616161` (color/grey/620) | `#A1A1A1` (color/grey/370) |
+
+- **Altijd met icoon of label.** Positief en negatief liggen bij rood-groen kleurenblindheid dicht bij elkaar.
+- **Geen warning.** Emerald heeft geen gele of oranje waarschuwingskleur, dataviz dus ook niet.
+- **Geen informative in charts.** `icon/feedback/informative` is in dark mode vrijwel de primaire categorische blauw.
+
 Grijs: backdrop grey 50 / 1000, gridlines grey 100 / 900, as grey 200 / 800, labels grey 600 / 400.
 De volledige set staat in [`tokens/`](tokens/).
 
@@ -101,7 +117,7 @@ index.html            de playground
 css/styles.css        opmaak van de tool
 js/color.js           kleurwiskunde (OKLCH, WCAG contrast, kleurenblind-simulatie)
 js/scales.js          definitie en generator van de kleurschalen
-js/palette.js         rollen (categorisch, grijs, bijzonder, sequentieel, divergerend, status) en chartmaten
+js/palette.js         rollen (categorisch, grijs, bijzonder, sequentieel, divergerend), status uit Emerald, chartmaten
 js/charts.js          de voorbeeldcharts (SVG)
 js/data.js            fictieve voorbeelddata
 js/export.js          export naar CSS variabelen en JSON, lijst met semantische tokens

@@ -143,7 +143,7 @@ export const budgetDeviation = [
 
 export const budgets = [
   { name: 'Boodschappen', used: 0.62, status: 'positive', text: 'Binnen budget' },
-  { name: 'Vervoer', used: 0.91, status: 'warning', text: 'Bijna op' },
+  { name: 'Vervoer', used: 0.91, status: 'positive', text: 'Nog 9% beschikbaar' },
   { name: 'Vrije tijd', used: 1, status: 'negative', text: 'Overschreden' },
   { name: 'Kleding', used: 0.18, status: 'neutral', text: 'Nog niet gestart' },
 ];

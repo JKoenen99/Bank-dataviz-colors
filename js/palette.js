@@ -1,4 +1,5 @@
-// Palette roles: which scale step does which job in each mode.
+// Palette roles: which scale step does which job in each mode. Status colours
+// are the exception: they come from Emerald, see STATUS.
 // `DEFAULT_STATE` is the proposal; the playground lets you change every choice.
 
 import { buildAllScales, SCALE_DEFS, STEPS, SURFACE, MIN_CONTRAST, mirrorStep } from './scales.js';
@@ -38,11 +39,28 @@ export const DEFAULT_STATE = {
   },
   seq: { scale: 'blue', classes: 5 },
   div: { neg: 'coral', pos: 'blue' },
-  status: {
-    positive: { scale: 'green', light: 600, dark: 400 },
-    negative: { scale: 'red', light: 600, dark: 400 },
-    warning: { scale: 'yellow', light: 500, dark: 200 },
-    neutral: { scale: 'grey', light: 500, dark: 500 },
+};
+
+// Status colours are not ours to choose: they are the feedback colours of
+// Emerald, the UI design system, so a status looks the same in a chart as in
+// the interface around it. `ref` is the Emerald primitive behind the token.
+// Emerald has no warning colour, and informative stays out of charts: in dark
+// mode it is almost the primary categorical blue.
+export const STATUS = {
+  positive: {
+    token: 'icon/feedback/positive',
+    light: { hex: '#007F42', ref: 'color/green/750' },
+    dark: { hex: '#75B12B', ref: 'color/green/570' },
+  },
+  negative: {
+    token: 'icon/feedback/negative',
+    light: { hex: '#C21700', ref: 'color/red/620' },
+    dark: { hex: '#E45F4E', ref: 'color/red/400' },
+  },
+  neutral: {
+    token: 'icon/feedback/neutral',
+    light: { hex: '#616161', ref: 'color/grey/620' },
+    dark: { hex: '#A1A1A1', ref: 'color/grey/370' },
   },
 };
 
@@ -74,7 +92,6 @@ export const SPEC = {
 export const STATUS_ROLES = {
   positive: 'Positief',
   negative: 'Negatief',
-  warning: 'Waarschuwing',
   neutral: 'Neutraal',
 };
 
@@ -113,8 +130,8 @@ export function resolve(state) {
     }
     const status = {};
     for (const role of Object.keys(STATUS_ROLES)) {
-      const s = state.status[role];
-      status[role] = withContrast(pick(s.scale, s[mode]));
+      const s = STATUS[role];
+      status[role] = withContrast({ hex: s[mode].hex, ref: `Emerald ${s[mode].ref}`, token: s.token });
     }
     tokens[mode] = {
       surface,

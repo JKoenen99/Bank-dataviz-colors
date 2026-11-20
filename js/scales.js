@@ -80,14 +80,6 @@ export const SCALE_DEFS = [
     pins: { 400: '#928DC9' },
   },
   {
-    id: 'red',
-    name: 'Red',
-    note: 'Alleen voor status (negatief). Roder dan coral zodat ze niet verward worden.',
-    hue: [18, 18, 19, 20, 22, 24, 25, 26, 26, 26, 26],
-    chroma: [0.02, 0.045, 0.09, 0.14, 0.18, 0.2, 0.195, 0.17, 0.14, 0.105, 0.075],
-    pins: {},
-  },
-  {
     id: 'grey',
     name: 'Grey',
     note: 'Neutraal, sluit aan op bestaande tokens: #949494 op 400 en #7D7D7D op 500.',

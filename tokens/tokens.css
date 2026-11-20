@@ -55,17 +55,6 @@
   --dv-purple-800: #3F3A76;
   --dv-purple-900: #2F2C58;
   --dv-purple-1000: #232240;
-  --dv-red-50: #FFF2F2;
-  --dv-red-100: #FFDBDB;
-  --dv-red-200: #FFB7B7;
-  --dv-red-300: #FF8B8D;
-  --dv-red-400: #F36164;
-  --dv-red-500: #E44145;
-  --dv-red-600: #CB2B31;
-  --dv-red-700: #A61F22;
-  --dv-red-800: #811819;
-  --dv-red-900: #5F1615;
-  --dv-red-1000: #451513;
   --dv-grey-50: #F5F5F5;
   --dv-grey-100: #E3E3E3;
   --dv-grey-200: #C9C9C9;
@@ -79,7 +68,8 @@
   --dv-grey-1000: #252525;
 }
 
-/* Chartregels: maximaal 5 categorische kleuren, daarboven alles in --dv-cat-1. Geen donuts. */
+/* Chartregels: maximaal 5 categorische kleuren, daarboven alles in --dv-cat-1. Geen donuts.
+   Status komt uit Emerald (icon/feedback/*): altijd met icoon of label, geen warning. */
 :root {
   --dv-gap: 2px; /* ruimte tussen segmenten */
   --dv-radius: 4px;
@@ -116,10 +106,9 @@
   --dv-div-5: #85D3FA; /* blue.200 */
   --dv-div-6: #009BE0; /* blue.400 */
   --dv-div-7: #006EBA; /* blue.600 */
-  --dv-status-positive: #007873; /* green.600 */
-  --dv-status-negative: #CB2B31; /* red.600 */
-  --dv-status-warning: #A47600; /* yellow.500 */
-  --dv-status-neutral: #7D7D7D; /* grey.500 */
+  --dv-status-positive: #007F42; /* icon/feedback/positive, Emerald color/green/750 */
+  --dv-status-negative: #C21700; /* icon/feedback/negative, Emerald color/red/620 */
+  --dv-status-neutral: #616161; /* icon/feedback/neutral, Emerald color/grey/620 */
 }
 
 /* Dark mode (surface #1E1E1E) */
@@ -150,8 +139,7 @@
   --dv-div-5: #004291; /* blue.800 */
   --dv-div-6: #006EBA; /* blue.600 */
   --dv-div-7: #009BE0; /* blue.400 */
-  --dv-status-positive: #12A399; /* green.400 */
-  --dv-status-negative: #F36164; /* red.400 */
-  --dv-status-warning: #F3C000; /* yellow.200 */
-  --dv-status-neutral: #7D7D7D; /* grey.500 */
+  --dv-status-positive: #75B12B; /* icon/feedback/positive, Emerald color/green/570 */
+  --dv-status-negative: #E45F4E; /* icon/feedback/negative, Emerald color/red/400 */
+  --dv-status-neutral: #A1A1A1; /* icon/feedback/neutral, Emerald color/grey/370 */
 }

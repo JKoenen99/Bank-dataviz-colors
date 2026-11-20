@@ -82,9 +82,6 @@ function sanitize(raw) {
   d.seq.classes = oneOf(Number(raw.seq?.classes), [3, 4, 5, 6, 7], d.seq.classes);
   d.div.neg = oneOf(raw.div?.neg, HUE_SCALES, d.div.neg);
   d.div.pos = oneOf(raw.div?.pos, HUE_SCALES, d.div.pos);
-  for (const role of Object.keys(STATUS_ROLES)) {
-    for (const mode of MODES) d.status[role][mode] = stepOf(raw.status?.[role]?.[mode], d.status[role][mode]);
-  }
   return d;
 }
 
@@ -230,7 +227,10 @@ function renderPanel() {
   const statusRows = Object.entries(STATUS_ROLES)
     .map(
       ([role, label]) =>
-        `<tr><th scope="row">${label}<small>${scaleName(state.status[role].scale)}</small></th>${MODES.map((mode) => `<td>${stepSelect(state.status[role].scale, state.status[role][mode], `data-act="status" data-role="${role}" data-mode="${mode}" aria-label="${label}, ${MODE_LABEL[mode]}"`, `status-${role}-${mode}`)}</td>`).join('')}</tr>`,
+        `<tr><th scope="row">${label}<small>${resolved.tokens.light.status[role].token}</small></th>${MODES.map((mode) => {
+          const t = resolved.tokens[mode].status[role];
+          return `<td><span class="step-select fixed" title="${t.ref} · ${fmt(t.contrast)}:1 op ${SURFACE[mode]}"><i style="background:${t.hex}"></i>${t.hex}</span></td>`;
+        }).join('')}</tr>`,
     )
     .join('');
 
@@ -277,6 +277,7 @@ function renderPanel() {
     </section>
     <section>
       <h3>Status</h3>
+      <p class="hint">Vast: dit zijn de feedbackkleuren van Emerald, zodat een status in een chart dezelfde kleur heeft als in de UI. Altijd met icoon of label. Emerald heeft geen warning.</p>
       <table class="roles"><thead><tr><th></th><th>Light</th><th>Dark</th></tr></thead><tbody>${statusRows}</tbody></table>
     </section>`;
 }
@@ -298,7 +299,7 @@ function stageVars(t) {
     .join(';');
 }
 
-const STATUS_ICON = { positive: '✓', warning: '!', negative: '✕', neutral: '–' };
+const STATUS_ICON = { positive: '✓', negative: '✕', neutral: '–' };
 
 function kpiTile(k) {
   const up = k.delta >= 0;
@@ -583,7 +584,6 @@ function bindEvents() {
       } else if (act === 'neutral') s.neutral[role][mode] = +el.value;
       else if (act === 'distinct') s.distinct[role][mode] = +el.value;
       else if (act === 'demo-count') s.demoCount = +el.value;
-      else if (act === 'status') s.status[role][mode] = +el.value;
       else if (act === 'seq-scale') s.seq.scale = el.value;
       else if (act === 'seq-classes') s.seq.classes = +el.value;
       else if (act === 'div-neg') s.div.neg = el.value;

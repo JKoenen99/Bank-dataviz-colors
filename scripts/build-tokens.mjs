@@ -61,6 +61,7 @@ for (const mode of MODES) {
   console.log(`  zwakste paar: ${sep.normal.value.toFixed(1)} (${sep.normal.pair}), kleurenblind ${sep.cvd.value.toFixed(1)} (${sep.cvd.pair})`);
   console.log(`  ${Object.keys(NEUTRAL_ROLES).map((r) => `${r} ${t.neutral[r].hex}`).join('  ')}`);
   console.log(`  ${Object.entries(t.distinct).map(([r, c]) => `${r} ${c.hex}`).join('  ')}`);
+  console.log(`  status (Emerald): ${Object.entries(t.status).map(([r, c]) => `${r} ${c.hex} ${c.contrast.toFixed(2)}:1`).join('  ')}`);
 }
 
 if (problems.length) {

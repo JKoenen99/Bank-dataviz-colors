@@ -15,7 +15,7 @@ function modeVars(t) {
   t.seq.forEach((c, i) => lines.push(`  --dv-seq-${i + 1}: ${c.hex}; /* ${c.ref} */`));
   t.div.forEach((c, i) => lines.push(`  --dv-div-${i + 1}: ${c.hex}; /* ${c.ref} */`));
   for (const role of Object.keys(STATUS_ROLES)) {
-    lines.push(`  --dv-status-${role}: ${t.status[role].hex}; /* ${t.status[role].ref} */`);
+    lines.push(`  --dv-status-${role}: ${t.status[role].hex}; /* ${t.status[role].token}, ${t.status[role].ref} */`);
   }
   return lines.join('\n');
 }
@@ -31,7 +31,7 @@ export function toCss({ scales, tokens }) {
     scaleLines.join('\n'),
     '}',
     '',
-    `/* Chartregels: maximaal ${MAX_CATEGORICAL} categorische kleuren, daarboven alles in --dv-cat-1. Geen donuts. */`,
+    `/* Chartregels: maximaal ${MAX_CATEGORICAL} categorische kleuren, daarboven alles in --dv-cat-1. Geen donuts.\n   Status komt uit Emerald (icon/feedback/*): altijd met icoon of label, geen warning. */`,
     ':root {',
     `  --dv-gap: ${SPEC.gap}px; /* ruimte tussen segmenten */`,
     `  --dv-radius: ${SPEC.radius}px;`,
@@ -60,6 +60,7 @@ export function toJson({ scales, tokens }) {
       moreCategories: 'Meer categorieën: alles in categorical[0]',
       reservedGrey: 'Grijs, zwart en wit alleen voor distinct (totaal, gemiddelde, overig, ontbrekend)',
       pie: 'Taart toegestaan, donut niet',
+      status: 'Statuskleuren zijn de feedbackkleuren van Emerald. Altijd met icoon of label. Geen warning, geen informative in charts',
       gap: SPEC.gap,
       radius: SPEC.radius,
       strokeBaseline: SPEC.baseline,
@@ -82,7 +83,7 @@ export function toJson({ scales, tokens }) {
       categorical: t.cat.map((c) => ({ name: c.name, ...slim(c) })),
       sequential: t.seq.map(slim),
       diverging: t.div.map(slim),
-      status: Object.fromEntries(Object.keys(STATUS_ROLES).map((r) => [r, slim(t.status[r])])),
+      status: Object.fromEntries(Object.keys(STATUS_ROLES).map((r) => [r, { token: t.status[r].token, ...slim(t.status[r]) }])),
     };
   }
   return JSON.stringify(out, null, 2) + '\n';
@@ -143,7 +144,7 @@ export function semanticGroups(tokens) {
     {
       id: 'status',
       title: 'Status',
-      note: 'Altijd samen met een icoon of label, nooit alleen kleur.',
+      note: 'Uit Emerald (icon/feedback/*), niet uit onze schalen. Altijd met icoon of label, nooit alleen kleur.',
       rows: Object.entries(STATUS_ROLES).map(([r, label]) => ({ name: `dv-status-${r}`, role: label, light: L.status[r], dark: D.status[r] })),
     },
   ];
